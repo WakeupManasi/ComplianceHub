@@ -40,36 +40,54 @@ Agent 4 — Analysis Agent (LLM Core)
 The primary LLM inference interface. Consumes structured diff reports and produces actionable compliance intelligence via LangChain AgentExecutor with Pydantic-validated output parsing.
 
 Project Structure
-compliancehub/
-├── agents/
-│   ├── scraping_agent.py          # Document acquisition, URL deduplication, crawl state
-│   ├── preprocessing_layer.py     # PyMuPDF extraction, normalization, block hashing
-│   ├── diff_agent.py              # Myers' lexical + ChromaDB semantic diff engine
-│   ├── analysis_agent.py          # LangChain AgentExecutor, tool definitions, prompt templates
-│   ├── darkweb_agent.py           # HIBP / Flare / SpyCloud API integrations, severity tiering
-│   └── predictive_agent.py        # MITRE ATT&CK correlated threat inference, playbook generation
-├── api/
-│   ├── views.py                   # Django REST Framework viewsets
-│   ├── serializers.py             # Pydantic / DRF serializer definitions
-│   └── urls.py                    # API route declarations
-├── config/
-│   ├── settings.py                # Django configuration; environment variable loading via python-decouple
-│   ├── celery.py                  # Celery application instance and Beat schedule registry
-│   └── routing.py                 # Django Channels ASGI WebSocket routing
-├── db/
-│   ├── models.py                  # MongoEngine document schema definitions
-│   └── indexes.py                 # Index provisioning scripts
-├── frontend/
-│   ├── templates/                 # Django-rendered HTML templates
-│   ├── static/css/                # Dark-mode terminal stylesheet
-│   └── static/js/                 # WebSocket client, Chart.js initialization, toast notifications
-├── prompts/
-│   └── analysis_prompts.py        # Parameterized LangChain prompt templates with context injection
-├── orchestrator/
-│   └── orchestrator.py            # Agent lifecycle manager, event router, DLQ handler, retry logic
-├── requirements.txt
-├── .env.example
-└── README.md
+flowchart TD
+
+    A[Regulatory Sources / External APIs]
+
+    A --> B[Scraping Agent]
+    B --> C[Preprocessing Layer]
+    C --> D[Diff Agent]
+    D --> E[Analysis Agent]
+
+    E --> F[Dark Web Agent]
+    F --> G[Predictive Agent]
+
+    G --> H[API Layer]
+    H --> I[Frontend Dashboard]
+
+    %% Supporting Systems
+    B --> DB[(MongoDB)]
+    C --> DB
+    D --> DB
+    E --> DB
+    F --> DB
+    G --> DB
+
+    %% Orchestration
+    O[Orchestrator] --> B
+    O --> C
+    O --> D
+    O --> E
+    O --> F
+    O --> G
+
+    %% Messaging Layer
+    R[(Redis / Celery)]
+    O --> R
+    R --> B
+    R --> D
+    R --> F
+    R --> G
+
+    %% Config
+    CFG[Config & Settings] --> O
+    CFG --> H
+
+    %% Prompts
+    P[Prompt Templates] --> E
+
+    %% Frontend Enhancements
+    I --> WS[WebSockets / Live Updates]
 
 Deployment & Process Orchestration
 
