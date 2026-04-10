@@ -6,7 +6,7 @@ purpose-architected for the Indian financial compliance continuum.
 
 Architectural Thesis
 Organizations operating under the Indian regulatory compliance continuum — governed by the Reserve Bank of India (RBI), the Securities and Exchange Board of India (SEBI), and the Ministry of Corporate Affairs (MCA) — face a dual-vector existential threat: regulatory drift compounded by credential surface exposure. Manual compliance monitoring pipelines collapse under the combinatorial pressure of hundreds of gazette notifications, master circulars, and policy amendments published annually. The RBI alone issued over 600 discrete notifications in 2024. Simultaneously, exfiltrated credentials surface on dark web forums within 48–96 hours of breach execution — frequently antedating any organizational incident response.
-ComplianceHub dissolves both threat vectors through a fully decoupled, event-driven, multi-agent AI architecture: six autonomous agents, each owning a discrete epistemic domain, communicating asynchronously via a Redis-backed inter-process message bus, converging at a WebSocket-native real-time intelligence dashboard. The system eliminates human-in-the-loop dependencies entirely — from document acquisition through semantic analysis, breach detection, and predictive threat modeling — delivering continuous operational intelligence as a stream, not a report.
+ComplianceHub dissolves both threat vectors through a fully decoupled, event-driven, multi-agent AI architecture: six autonomous agents, each owning a discrete epistemic domain.
 
 System Architecture
 ComplianceHub is structured as an event-driven, pipeline-based multi-agent system. Each agent is an independent Python module exposing LangChain-compatible tool functions. Agents communicate exclusively via a Redis pub/sub message bus, enabling full decoupling — no agent holds a direct Python reference to any sibling agent. All inter-agent coupling is mediated through a typed event schema.
@@ -40,54 +40,36 @@ Agent 4 — Analysis Agent (LLM Core)
 The primary LLM inference interface. Consumes structured diff reports and produces actionable compliance intelligence via LangChain AgentExecutor with Pydantic-validated output parsing.
 
 Project Structure
-flowchart TD
-
-    A[Regulatory Sources / External APIs]
-
-    A --> B[Scraping Agent]
-    B --> C[Preprocessing Layer]
-    C --> D[Diff Agent]
-    D --> E[Analysis Agent]
-
-    E --> F[Dark Web Agent]
-    F --> G[Predictive Agent]
-
-    G --> H[API Layer]
-    H --> I[Frontend Dashboard]
-
-    %% Supporting Systems
-    B --> DB[(MongoDB)]
-    C --> DB
-    D --> DB
-    E --> DB
-    F --> DB
-    G --> DB
-
-    %% Orchestration
-    O[Orchestrator] --> B
-    O --> C
-    O --> D
-    O --> E
-    O --> F
-    O --> G
-
-    %% Messaging Layer
-    R[(Redis / Celery)]
-    O --> R
-    R --> B
-    R --> D
-    R --> F
-    R --> G
-
-    %% Config
-    CFG[Config & Settings] --> O
-    CFG --> H
-
-    %% Prompts
-    P[Prompt Templates] --> E
-
-    %% Frontend Enhancements
-    I --> WS[WebSockets / Live Updates]
+compliancehub/
+├── agents/
+│   ├── scraping_agent.py          # Document acquisition, URL deduplication, crawl state
+│   ├── preprocessing_layer.py     # PyMuPDF extraction, normalization, block hashing
+│   ├── diff_agent.py              # Myers' lexical + ChromaDB semantic diff engine
+│   ├── analysis_agent.py          # LangChain AgentExecutor, tool definitions, prompt templates
+│   ├── darkweb_agent.py           # HIBP / Flare / SpyCloud API integrations, severity tiering
+│   └── predictive_agent.py        # MITRE ATT&CK correlated threat inference, playbook generation
+├── api/
+│   ├── views.py                   # Django REST Framework viewsets
+│   ├── serializers.py             # Pydantic / DRF serializer definitions
+│   └── urls.py                    # API route declarations
+├── config/
+│   ├── settings.py                # Django configuration; environment variable loading via python-decouple
+│   ├── celery.py                  # Celery application instance and Beat schedule registry
+│   └── routing.py                 # Django Channels ASGI WebSocket routing
+├── db/
+│   ├── models.py                  # MongoEngine document schema definitions
+│   └── indexes.py                 # Index provisioning scripts
+├── frontend/
+│   ├── templates/                 # Django-rendered HTML templates
+│   ├── static/css/                # Dark-mode terminal stylesheet
+│   └── static/js/                 # WebSocket client, Chart.js initialization, toast notifications
+├── prompts/
+│   └── analysis_prompts.py        # Parameterized LangChain prompt templates with context injection
+├── orchestrator/
+│   └── orchestrator.py            # Agent lifecycle manager, event router, DLQ handler, retry logic
+├── requirements.txt
+├── .env.example
+└── README.md
 
 Deployment & Process Orchestration
 
