@@ -1,0 +1,81 @@
+{% extends "regulatory_intel/base.html" %}
+{% block title %}{{ report.title }}{% endblock %}
+{% block content %}
+<div class="mb-6"><a href="{% url 'regulatory_intel:report_list' %}" class="text-xs text-indigo-400 hover:text-indigo-300">← Back to Reports</a></div>
+
+<div class="glass rounded-2xl p-6 mb-6">
+    <div class="flex items-start justify-between">
+        <div>
+            <h1 class="text-xl font-bold text-white">{{ report.title }}</h1>
+            <div class="flex items-center gap-3 mt-2">
+                <span class="text-xs px-2.5 py-1 rounded-full {% if report.overall_risk_score >= 8 %}bg-red-500/20 text-red-300{% elif report.overall_risk_score >= 5 %}bg-amber-500/20 text-amber-300{% else %}bg-emerald-500/20 text-emerald-300{% endif %} font-medium">Risk Score: {{ report.overall_risk_score }}/10</span>
+                <span class="text-xs text-gray-400">Generated: {{ report.created_at|date:"M d, Y H:i" }}</span>
+                {% if report.is_approved %}<span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">✓ Approved</span>{% endif %}
+            </div>
+        </div>
+        {% if not report.is_approved %}
+        <form method="post" action="{% url 'regulatory_intel:approve_report' report.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Approve Report
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+        <div class="glass rounded-2xl p-6">
+            <h2 class="text-lg font-bold text-white mb-3">Executive Summary</h2>
+            <p class="text-sm text-gray-300 leading-relaxed">{{ report.executive_summary }}</p>
+        </div>
+        {% if report.detailed_analysis %}
+        <div class="glass rounded-2xl p-6">
+            <h2 class="text-lg font-bold text-white mb-3">Detailed Analysis</h2>
+            <div class="text-sm text-gray-300 leading-relaxed whitespace-pre-line">{{ report.detailed_analysis }}</div>
+        </div>
+        {% endif %}
+        {% if report.policy_amendments %}
+        <div class="glass rounded-2xl p-6">
+            <h2 class="text-lg font-bold text-white mb-3">Policy Amendments</h2>
+            <div class="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
+                <pre class="text-sm text-indigo-200 whitespace-pre-wrap">{{ report.policy_amendments }}</pre>
+            </div>
+        </div>
+        {% endif %}
+        {% if report.sop_changes %}
+        <div class="glass rounded-2xl p-6">
+            <h2 class="text-lg font-bold text-white mb-3">Action Items / SOP Changes</h2>
+            <div class="text-sm text-gray-300 whitespace-pre-line">{{ report.sop_changes }}</div>
+        </div>
+        {% endif %}
+    </div>
+    <div class="space-y-6">
+        {% if report.filing_checklist %}
+        <div class="glass rounded-2xl p-6">
+            <h2 class="text-lg font-bold text-white mb-3">Compliance Timeline</h2>
+            <div class="text-sm text-gray-300 whitespace-pre-line">{{ report.filing_checklist }}</div>
+        </div>
+        {% endif %}
+        {% if mappings %}
+        <div class="glass rounded-2xl p-6">
+            <h2 class="text-lg font-bold text-white mb-4">Affected Areas</h2>
+            <div class="space-y-2">
+                {% for m in mappings|slice:":15" %}
+                <div class="flex items-center gap-2 p-2 rounded-lg bg-white/5">
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300">{{ m.get_area_type_display }}</span>
+                    <span class="text-xs text-gray-300">{{ m.area_name }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        <div class="glass rounded-2xl p-6">
+            <h2 class="text-lg font-bold text-white mb-3">Source Document</h2>
+            <a href="{% url 'regulatory_intel:document_detail' document.pk %}" class="text-sm text-indigo-400 hover:text-indigo-300 transition">{{ document.title }}</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - ComplianceHub{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'risks:risk_list' %}" class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Risk Register
+    </a>
+</div>
+
+<div class="max-w-2xl">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ title }}</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Fill in the risk information below.</p>
+        </div>
+        <form method="post" class="p-6 space-y-5">
+            {% csrf_token %}
+            {% for field in form %}
+            <div>
+                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    {{ field.label }}
+                    {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                </label>
+
+                {% if field.name == 'description' or field.name == 'mitigation_plan' %}
+                <textarea name="{{ field.html_name }}" id="{{ field.id_for_label }}" rows="4"
+                          class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-400 transition-colors"
+                          placeholder="{% if field.name == 'description' %}Describe the risk...{% else %}Outline the mitigation plan...{% endif %}"
+                          {% if field.field.required %}required{% endif %}>{{ field.value|default:'' }}</textarea>
+
+                {% elif field.name == 'severity' %}
+                <select name="{{ field.html_name }}" id="{{ field.id_for_label }}"
+                        class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-400 transition-colors">
+                    <option value="low" {% if field.value == 'low' %}selected{% endif %}>Low</option>
+                    <option value="medium" {% if field.value == 'medium' %}selected{% endif %}>Medium</option>
+                    <option value="high" {% if field.value == 'high' %}selected{% endif %}>High</option>
+                    <option value="critical" {% if field.value == 'critical' %}selected{% endif %}>Critical</option>
+                </select>
+
+                {% elif field.name == 'mitigation_status' %}
+                <select name="{{ field.html_name }}" id="{{ field.id_for_label }}"
+                        class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-400 transition-colors">
+                    <option value="identified" {% if field.value == 'identified' %}selected{% endif %}>Identified</option>
+                    <option value="in_progress" {% if field.value == 'in_progress' %}selected{% endif %}>In Progress</option>
+                    <option value="mitigated" {% if field.value == 'mitigated' %}selected{% endif %}>Mitigated</option>
+                    <option value="verified" {% if field.value == 'verified' %}selected{% endif %}>Verified by Auditor</option>
+                    <option value="accepted" {% if field.value == 'accepted' %}selected{% endif %}>Risk Accepted</option>
+                </select>
+
+                {% elif field.name == 'linked_control' or field.name == 'linked_cve' or field.name == 'linked_vendor' or field.name == 'assigned_to' %}
+                <!-- Render Django's widget for FK/select fields -->
+                <div class="tailwind-select">
+                    {{ field }}
+                </div>
+
+                {% else %}
+                <input type="text" name="{{ field.html_name }}" id="{{ field.id_for_label }}"
+                       value="{{ field.value|default:'' }}"
+                       class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-400 transition-colors"
+                       {% if field.field.required %}required{% endif %}>
+                {% endif %}
+
+                {% if field.errors %}
+                <div class="mt-1.5 space-y-1">
+                    {% for error in field.errors %}
+                    <p class="text-sm text-red-600 dark:text-red-400">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if field.help_text %}
+                <p class="mt-1.5 text-xs text-gray-400 dark:text-gray-500">{{ field.help_text }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <div class="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button type="submit"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Save Risk
+                </button>
+                <a href="{% url 'risks:risk_list' %}"
+                   class="inline-flex items-center px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Style Django's rendered select/input widgets within forms */
+.tailwind-select select,
+.tailwind-select input {
+    display: block;
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid rgb(209 213 219);
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    color: rgb(17 24 39);
+    background-color: white;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.tailwind-select select:focus,
+.tailwind-select input:focus {
+    border-color: rgb(99 102 241);
+    box-shadow: 0 0 0 1px rgb(99 102 241);
+    outline: none;
+}
+.dark .tailwind-select select,
+.dark .tailwind-select input {
+    border-color: rgb(75 85 99);
+    background-color: rgb(55 65 81);
+    color: rgb(243 244 246);
+}
+.dark .tailwind-select select:focus,
+.dark .tailwind-select input:focus {
+    border-color: rgb(129 140 248);
+    box-shadow: 0 0 0 1px rgb(129 140 248);
+}
+</style>
+{% endblock %}

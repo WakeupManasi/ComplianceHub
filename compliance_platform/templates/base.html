@@ -1,0 +1,453 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{% block title %}ComplianceHub{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        sidebar: {
+                            DEFAULT: '#1e1b4b',
+                            dark: '#0f0d2e',
+                        },
+                        primary: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                            950: '#1e1b4b',
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+    <style>
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4f46e5; }
+
+        /* Sidebar transition */
+        #sidebar { transition: transform 0.3s ease-in-out; }
+        #sidebar-overlay { transition: opacity 0.3s ease-in-out; }
+
+        /* Smooth transitions for dark mode */
+        * { transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
+
+        /* Active nav indicator */
+        .nav-active {
+            background: rgba(99, 102, 241, 0.2);
+            border-right: 3px solid #818cf8;
+        }
+        .dark .nav-active {
+            background: rgba(99, 102, 241, 0.25);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+
+    <!-- ===== Mobile Sidebar Overlay ===== -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+    <!-- ===== Sidebar ===== -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-50 h-screen w-64 bg-sidebar dark:bg-sidebar-dark flex flex-col transform -translate-x-full lg:translate-x-0">
+        <!-- Brand -->
+        <div class="flex items-center gap-3 px-5 py-5 border-b border-indigo-800/40">
+            <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-500/20">
+                <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold text-white tracking-tight">ComplianceHub</h1>
+                <p class="text-[10px] text-indigo-300/70 uppercase tracking-widest font-medium">GRC Platform</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            <p class="px-3 mb-2 text-[10px] font-semibold text-indigo-400/60 uppercase tracking-wider">Main</p>
+
+            <a href="/dashboard/" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-indigo-100/80 hover:text-white hover:bg-indigo-600/20 group"
+               data-path="/dashboard">
+                <svg class="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                Dashboard
+            </a>
+
+            <p class="px-3 mt-5 mb-2 text-[10px] font-semibold text-indigo-400/60 uppercase tracking-wider">Compliance</p>
+
+            <a href="/compliance/controls/" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-indigo-100/80 hover:text-white hover:bg-indigo-600/20 group"
+               data-path="/compliance/controls">
+                <svg class="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                </svg>
+                Controls
+            </a>
+
+            <a href="/compliance/documents/" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-indigo-100/80 hover:text-white hover:bg-indigo-600/20 group"
+               data-path="/compliance/documents">
+                <svg class="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                </svg>
+                Documents
+            </a>
+
+            <a href="/compliance/guidelines/" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-indigo-100/80 hover:text-white hover:bg-indigo-600/20 group"
+               data-path="/compliance/guidelines">
+                <svg class="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+                Guidelines
+            </a>
+
+            <p class="px-3 mt-5 mb-2 text-[10px] font-semibold text-indigo-400/60 uppercase tracking-wider">Audit</p>
+
+            <a href="/auditor/" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-indigo-100/80 hover:text-white hover:bg-indigo-600/20 group"
+               data-path="/auditor">
+                <svg class="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                </svg>
+                Auditor Panel
+            </a>
+
+            <a href="/auditor/audits/" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-indigo-100/80 hover:text-white hover:bg-indigo-600/20 group"
+               data-path="/auditor/audits">
+                <svg class="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                Audit Schedule
+            </a>
+
+            <a href="/auditor/timeline/" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-indigo-100/80 hover:text-white hover:bg-indigo-600/20 group"
+               data-path="/auditor/timeline">
+                <svg class="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Audit Timeline
+            </a>
+
+            <p class="px-3 mt-5 mb-2 text-[10px] font-semibold text-indigo-400/60 uppercase tracking-wider">Risk &amp; Security</p>
+
+            <a href="/vendors/" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-indigo-100/80 hover:text-white hover:bg-indigo-600/20 group"
+               data-path="/vendors">
+                <svg class="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+                Vendors
+            </a>
+
+            <a href="/cve/" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-indigo-100/80 hover:text-white hover:bg-indigo-600/20 group"
+               data-path="/cve">
+                <svg class="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                CVE Feed
+            </a>
+
+            <a href="/risks/" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-indigo-100/80 hover:text-white hover:bg-indigo-600/20 group"
+               data-path="/risks">
+                <svg class="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                Risks
+            </a>
+
+            <a href="/alerts/" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-indigo-100/80 hover:text-white hover:bg-indigo-600/20 group"
+               data-path="/alerts">
+                <svg class="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+                Alerts
+                {% if unread_count and unread_count > 0 %}
+                <span class="ml-auto inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-bold leading-none text-white bg-red-500 rounded-full">
+                    {{ unread_count }}
+                </span>
+                {% endif %}
+            </a>
+
+            <p class="px-3 mt-5 mb-2 text-[10px] font-semibold text-indigo-400/60 uppercase tracking-wider">Organization</p>
+
+            <a href="/organization/users/" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-indigo-100/80 hover:text-white hover:bg-indigo-600/20 group"
+               data-path="/organization/users">
+                <svg class="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                Team Members
+            </a>
+
+            <a href="/organization/settings/" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-indigo-100/80 hover:text-white hover:bg-indigo-600/20 group"
+               data-path="/organization/settings">
+                <svg class="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Settings
+            </a>
+
+            <p class="px-3 mt-5 mb-2 text-[10px] font-semibold text-indigo-400/60 uppercase tracking-wider">Tools</p>
+
+            <a href="/intel/" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-indigo-100/80 hover:text-white hover:bg-indigo-600/20 group"
+               data-path="/intel">
+                <svg class="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                </svg>
+                RegIntel (AI)
+            </a>
+
+            <a href="/threat/" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-indigo-100/80 hover:text-white hover:bg-indigo-600/20 group"
+               data-path="/threat">
+                <svg class="w-5 h-5 text-red-400 group-hover:text-red-300 flex-shrink-0 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                Dark Web Monitor
+            </a>
+
+            <a href="/ai/chat/" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-indigo-100/80 hover:text-white hover:bg-indigo-600/20 group"
+               data-path="/ai/chat">
+                <svg class="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-1.591 1.591a2.25 2.25 0 01-1.591.659H8.182a2.25 2.25 0 01-1.591-.659L5 14.5m14 0V19a2 2 0 01-2 2H7a2 2 0 01-2-2v-4.5"/>
+                </svg>
+                AI Assistant
+            </a>
+
+            <a href="/faq/" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-indigo-100/80 hover:text-white hover:bg-indigo-600/20 group"
+               data-path="/faq">
+                <svg class="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                FAQ
+            </a>
+        </nav>
+
+        <!-- User Info -->
+        <div class="border-t border-indigo-800/40 p-4">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-indigo-500/30 text-indigo-200 text-sm font-bold flex-shrink-0">
+                    {{ user.username|make_list|first|upper }}
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-medium text-white truncate">{{ user.username }}</p>
+                    <p class="text-[11px] text-indigo-300/70 truncate">
+                        {{ user.get_role_display }}{% if user.organization %} &middot; {{ user.organization.name }}{% endif %}
+                    </p>
+                </div>
+            </div>
+            <a href="{% url 'logout' %}"
+               class="flex items-center justify-center gap-2 w-full px-3 py-2 text-sm font-medium text-indigo-200 bg-indigo-800/30 hover:bg-indigo-700/40 rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </svg>
+                Sign Out
+            </a>
+        </div>
+    </aside>
+
+    <!-- ===== Main Content Wrapper ===== -->
+    <div class="lg:ml-64 min-h-screen flex flex-col">
+        <!-- Top Bar -->
+        <header class="sticky top-0 z-30 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
+                <!-- Left: mobile menu + page title -->
+                <div class="flex items-center gap-4">
+                    <!-- Mobile menu button -->
+                    <button onclick="toggleSidebar()" class="lg:hidden p-2 -ml-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100">
+                        {% block page_title %}Dashboard{% endblock %}
+                    </h1>
+                </div>
+
+                <!-- Right: actions -->
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <!-- Dark Mode Toggle -->
+                    <button onclick="toggleDarkMode()" id="theme-toggle"
+                            class="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            title="Toggle dark mode">
+                        <!-- Sun icon (shown in dark mode) -->
+                        <svg id="theme-icon-light" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                        </svg>
+                        <!-- Moon icon (shown in light mode) -->
+                        <svg id="theme-icon-dark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                        </svg>
+                    </button>
+
+                    <!-- Notifications -->
+                    <a href="/alerts/" class="relative p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                        {% if unread_count and unread_count > 0 %}
+                        <span class="absolute top-1.5 right-1.5 flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                        </span>
+                        {% endif %}
+                    </a>
+
+                    <!-- User avatar -->
+                    <div class="hidden sm:flex items-center gap-3 pl-3 border-l border-gray-200 dark:border-gray-600">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-full bg-primary-600 text-white text-sm font-bold">
+                            {{ user.username|make_list|first|upper }}
+                        </div>
+                        <div class="hidden md:block">
+                            <p class="text-sm font-medium text-gray-700 dark:text-gray-200 leading-tight">{{ user.username }}</p>
+                            <p class="text-[11px] text-gray-400 dark:text-gray-500 leading-tight">{{ user.get_role_display }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Messages / Alerts -->
+        {% if messages %}
+        <div class="px-4 sm:px-6 lg:px-8 pt-4 space-y-2">
+            {% for message in messages %}
+            <div class="flex items-center gap-3 p-4 rounded-lg border
+                        {% if message.tags == 'success' %}bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200
+                        {% elif message.tags == 'error' %}bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200
+                        {% elif message.tags == 'warning' %}bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200
+                        {% else %}bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200
+                        {% endif %}"
+                 role="alert">
+                {% if message.tags == 'success' %}
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                {% elif message.tags == 'error' %}
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                {% elif message.tags == 'warning' %}
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                {% else %}
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                {% endif %}
+                <span class="text-sm font-medium">{{ message }}</span>
+                <button onclick="this.parentElement.remove()" class="ml-auto p-1 rounded hover:bg-black/5 dark:hover:bg-white/5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Page Content -->
+        <main class="flex-1 px-4 sm:px-6 lg:px-8 py-6">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="border-t border-gray-200 dark:border-gray-700 px-4 sm:px-6 lg:px-8 py-4">
+            <p class="text-xs text-gray-400 dark:text-gray-500 text-center">
+                &copy; 2026 ComplianceHub &mdash; Governance, Risk &amp; Compliance Platform
+            </p>
+        </footer>
+    </div>
+
+    <!-- ===== JavaScript ===== -->
+    <script>
+        // --- Dark Mode ---
+        function updateThemeIcons() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const iconLight = document.getElementById('theme-icon-light');
+            const iconDark = document.getElementById('theme-icon-dark');
+            if (iconLight && iconDark) {
+                iconLight.classList.toggle('hidden', !isDark);
+                iconDark.classList.toggle('hidden', isDark);
+            }
+        }
+
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            const isDark = html.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeIcons();
+        }
+
+        // Set correct icons on load
+        updateThemeIcons();
+
+        // --- Mobile Sidebar ---
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const isOpen = !sidebar.classList.contains('-translate-x-full');
+
+            if (isOpen) {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            } else {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            }
+        }
+
+        // Close sidebar on resize to desktop
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 1024) {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                if (sidebar) {
+                    sidebar.classList.remove('-translate-x-full');
+                }
+                if (overlay) {
+                    overlay.classList.add('hidden');
+                }
+            }
+        });
+
+        // --- Active Navigation State ---
+        (function() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-link[data-path]').forEach(function(link) {
+                const linkPath = link.getAttribute('data-path');
+                if (currentPath.startsWith(linkPath)) {
+                    link.classList.add('nav-active', 'text-white');
+                    link.classList.remove('text-indigo-100/80');
+                    // Also highlight the icon
+                    const icon = link.querySelector('svg');
+                    if (icon) {
+                        icon.classList.remove('text-indigo-400');
+                        icon.classList.add('text-indigo-300');
+                    }
+                }
+            });
+        })();
+
+        // --- CSRF helper for AJAX ---
+        function getCsrfToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

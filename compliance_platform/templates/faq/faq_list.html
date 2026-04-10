@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}FAQ - ComplianceHub{% endblock %}
+{% block page_title %}FAQ{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Search box -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+        <div class="relative">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" id="faq-search"
+                   placeholder="Search questions..."
+                   autocomplete="off"
+                   class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm text-gray-700 dark:text-gray-200 pl-10 pr-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-gray-400 dark:placeholder-gray-500">
+        </div>
+    </div>
+
+    <!-- No results message (hidden by default) -->
+    <div id="no-results" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
+        <svg class="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <p class="text-sm text-gray-500 dark:text-gray-400">No matching questions found.</p>
+    </div>
+
+    <!-- FAQ categories -->
+    {% for category, faqs in grouped_faqs.items %}
+    <div class="faq-category">
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 px-1">{{ category }}</h2>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 divide-y divide-gray-200 dark:divide-gray-700">
+            {% for faq in faqs %}
+            <div class="faq-item" data-question="{{ faq.question|lower }}" data-answer="{{ faq.answer|lower }}">
+                <button type="button"
+                        onclick="toggleFaq(this)"
+                        class="faq-toggle w-full flex items-center justify-between gap-4 px-6 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <span class="text-sm font-medium text-gray-800 dark:text-gray-100">{{ faq.question }}</span>
+                    <svg class="faq-chevron w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div class="faq-answer hidden px-6 pb-5">
+                    <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{{ faq.answer }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
+        <svg class="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <p class="text-sm text-gray-500 dark:text-gray-400">No FAQs available yet.</p>
+    </div>
+    {% endfor %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleFaq(btn) {
+        const item = btn.closest('.faq-item');
+        const answer = item.querySelector('.faq-answer');
+        const chevron = item.querySelector('.faq-chevron');
+
+        const isOpen = !answer.classList.contains('hidden');
+
+        if (isOpen) {
+            answer.classList.add('hidden');
+            chevron.classList.remove('rotate-180');
+        } else {
+            answer.classList.remove('hidden');
+            chevron.classList.add('rotate-180');
+        }
+    }
+
+    // Search / filter
+    const searchInput = document.getElementById('faq-search');
+    const noResults = document.getElementById('no-results');
+
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        const categories = document.querySelectorAll('.faq-category');
+        let totalVisible = 0;
+
+        categories.forEach(function(cat) {
+            const items = cat.querySelectorAll('.faq-item');
+            let categoryVisible = 0;
+
+            items.forEach(function(item) {
+                const question = item.getAttribute('data-question') || '';
+                const answer = item.getAttribute('data-answer') || '';
+                const matches = !query || question.includes(query) || answer.includes(query);
+
+                item.style.display = matches ? '' : 'none';
+                if (matches) categoryVisible++;
+            });
+
+            cat.style.display = categoryVisible > 0 ? '' : 'none';
+            totalVisible += categoryVisible;
+        });
+
+        noResults.classList.toggle('hidden', totalVisible > 0 || !query);
+    });
+</script>
+{% endblock %}

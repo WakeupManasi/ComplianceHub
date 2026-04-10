@@ -1,0 +1,33 @@
+{% extends "regulatory_intel/base.html" %}
+{% block title %}Impact Reports{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold text-white mb-6">Impact Reports</h1>
+{% if reports %}
+<div class="space-y-3">
+    {% for report in reports %}
+    <a href="{% url 'regulatory_intel:report_detail' report.pk %}" class="block glass rounded-2xl p-5 card-hover">
+        <div class="flex items-start justify-between">
+            <div class="flex-1 min-w-0">
+                <h3 class="text-sm font-semibold text-white">{{ report.title }}</h3>
+                <p class="text-xs text-gray-400 mt-1 line-clamp-2">{{ report.executive_summary|truncatechars:150 }}</p>
+                <div class="flex items-center gap-3 mt-2">
+                    <span class="text-xs text-gray-500">{{ report.created_at|date:"M d, Y" }}</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full {% if report.overall_risk_score >= 8 %}bg-red-500/20 text-red-300{% elif report.overall_risk_score >= 5 %}bg-amber-500/20 text-amber-300{% else %}bg-emerald-500/20 text-emerald-300{% endif %}">Risk: {{ report.overall_risk_score }}/10</span>
+                </div>
+            </div>
+            {% if report.is_approved %}
+            <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-medium ml-3">Approved</span>
+            {% else %}
+            <span class="text-xs px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 font-medium ml-3">Pending</span>
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="glass rounded-2xl p-16 text-center">
+    <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    <p class="text-gray-400">No reports generated yet. Analyze a document to create one.</p>
+</div>
+{% endif %}
+{% endblock %}

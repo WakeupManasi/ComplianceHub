@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Alerts - ComplianceHub{% endblock %}
+{% block page_title %}Alerts{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header row -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">All Alerts</h2>
+            {% if unread_count > 0 %}
+            <span class="inline-flex items-center justify-center px-2.5 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full">
+                {{ unread_count }} unread
+            </span>
+            {% endif %}
+        </div>
+        <a href="{% url 'alerts:alert_list' %}?generate=1"
+           class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Generate Alerts
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+        <form method="get" class="flex flex-col sm:flex-row gap-3">
+            <div class="flex-1">
+                <label for="type" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Alert Type</label>
+                <select name="type" id="type"
+                        class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-700 dark:text-gray-200 px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">All Types</option>
+                    {% for value, label in alert_types %}
+                    <option value="{{ value }}" {% if current_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex-1">
+                <label for="severity" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Severity</label>
+                <select name="severity" id="severity"
+                        class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-700 dark:text-gray-200 px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">All Severities</option>
+                    <option value="low" {% if current_severity == 'low' %}selected{% endif %}>Low</option>
+                    <option value="medium" {% if current_severity == 'medium' %}selected{% endif %}>Medium</option>
+                    <option value="high" {% if current_severity == 'high' %}selected{% endif %}>High</option>
+                    <option value="critical" {% if current_severity == 'critical' %}selected{% endif %}>Critical</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button type="submit"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
+                    Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Alert list -->
+    <div class="space-y-3">
+        {% for alert in alerts %}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden
+                    {% if not alert.is_read %}border-l-4 border-l-primary-500 bg-primary-50/30 dark:bg-primary-900/10{% endif %}">
+            <div class="p-4 sm:p-5">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap items-center gap-2 mb-2">
+                            {% if not alert.is_read %}
+                            <span class="inline-block w-2 h-2 rounded-full bg-primary-500 flex-shrink-0" title="Unread"></span>
+                            {% endif %}
+
+                            <a href="{% url 'alerts:alert_detail' alert.pk %}"
+                               class="text-sm font-semibold text-gray-800 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                                {{ alert.title }}
+                            </a>
+
+                            <!-- Type badge -->
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                                {{ alert.get_alert_type_display }}
+                            </span>
+
+                            <!-- Severity badge -->
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide
+                                {% if alert.severity == 'critical' %}bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300
+                                {% elif alert.severity == 'high' %}bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300
+                                {% elif alert.severity == 'medium' %}bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300
+                                {% else %}bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300
+                                {% endif %}">
+                                {{ alert.get_severity_display }}
+                            </span>
+                        </div>
+
+                        <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{{ alert.description|truncatewords:30 }}</p>
+                        <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">{{ alert.created_at|date:"M d, Y H:i" }}</p>
+                    </div>
+
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        {% if not alert.is_read %}
+                        <form method="post" action="{% url 'alerts:dismiss_alert' alert.pk %}">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                                    title="Dismiss">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                Dismiss
+                            </button>
+                        </form>
+                        {% endif %}
+                        <a href="{% url 'alerts:alert_detail' alert.pk %}"
+                           class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/40 rounded-lg transition-colors">
+                            View
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
+            <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <p class="text-sm text-gray-500 dark:text-gray-400">No alerts found.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

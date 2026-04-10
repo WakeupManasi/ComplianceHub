@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 1: Organization Details - ComplianceHub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: { primary: { 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' } } } } }
+        ;(function(){ const t = localStorage.getItem('theme'); if (t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark'); })();
+    </script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex items-center justify-center px-4 py-8">
+
+<div class="w-full max-w-lg">
+    <!-- Branding -->
+    <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 dark:bg-indigo-500 mb-4">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Welcome to ComplianceHub</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Let's set up your organization in a few simple steps.</p>
+    </div>
+
+    <!-- Step Indicator -->
+    <div class="flex items-center justify-center mb-8">
+        <div class="flex items-center space-x-2">
+            <div class="flex items-center">
+                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-bold">1</span>
+                <span class="ml-2 text-sm font-medium text-indigo-700 dark:text-indigo-300 hidden sm:inline">Basics</span>
+            </div>
+            <div class="w-8 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+            <div class="flex items-center">
+                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 text-sm font-bold">2</span>
+                <span class="ml-2 text-sm font-medium text-gray-400 dark:text-gray-500 hidden sm:inline">Security</span>
+            </div>
+            <div class="w-8 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+            <div class="flex items-center">
+                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 text-sm font-bold">3</span>
+                <span class="ml-2 text-sm font-medium text-gray-400 dark:text-gray-500 hidden sm:inline">Industry</span>
+            </div>
+            <div class="w-8 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+            <div class="flex items-center">
+                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 text-sm font-bold">4</span>
+                <span class="ml-2 text-sm font-medium text-gray-400 dark:text-gray-500 hidden sm:inline">Review</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 border border-gray-200 dark:border-gray-700">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Organization Details</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Tell us about your company so we can tailor compliance frameworks for you.</p>
+
+        <form method="post" class="space-y-5">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                {% for error in form.non_field_errors %}
+                <p class="text-sm text-red-700 dark:text-red-300">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div>
+                <label for="id_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Organization Name</label>
+                <input type="text" name="name" id="id_name" value="{{ form.name.value|default:'' }}" required
+                       class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                       placeholder="Acme Corporation">
+                {% if form.name.errors %}<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.name.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div>
+                <label for="id_industry" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Industry</label>
+                <select name="industry" id="id_industry" required
+                        class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">Select your industry</option>
+                    <option value="it_saas" {% if form.industry.value == "it_saas" %}selected{% endif %}>IT / SaaS</option>
+                    <option value="banking" {% if form.industry.value == "banking" %}selected{% endif %}>Banking / Fintech</option>
+                    <option value="healthcare" {% if form.industry.value == "healthcare" %}selected{% endif %}>Healthcare</option>
+                    <option value="insurance" {% if form.industry.value == "insurance" %}selected{% endif %}>Insurance</option>
+                    <option value="government" {% if form.industry.value == "government" %}selected{% endif %}>Government</option>
+                </select>
+                {% if form.industry.errors %}<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.industry.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div>
+                <label for="id_country" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Country</label>
+                <input type="text" name="country" id="id_country" value="{{ form.country.value|default:'' }}" required
+                       class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                       placeholder="India">
+                {% if form.country.errors %}<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.country.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div>
+                <label for="id_company_size" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Company Size</label>
+                <select name="company_size" id="id_company_size" required
+                        class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">Select company size</option>
+                    <option value="1-50" {% if form.company_size.value == "1-50" %}selected{% endif %}>1 - 50 employees</option>
+                    <option value="51-200" {% if form.company_size.value == "51-200" %}selected{% endif %}>51 - 200 employees</option>
+                    <option value="201-500" {% if form.company_size.value == "201-500" %}selected{% endif %}>201 - 500 employees</option>
+                    <option value="501-1000" {% if form.company_size.value == "501-1000" %}selected{% endif %}>501 - 1,000 employees</option>
+                    <option value="1000+" {% if form.company_size.value == "1000+" %}selected{% endif %}>1,000+ employees</option>
+                </select>
+                {% if form.company_size.errors %}<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.company_size.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div class="pt-2">
+                <button type="submit"
+                        class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    Continue
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

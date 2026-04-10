@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}CVE Feed - ComplianceHub{% endblock %}
+{% block page_title %}CVE Feed{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <p class="text-sm text-gray-500 dark:text-gray-400">Track and manage Common Vulnerabilities and Exposures from the NVD.</p>
+    <a href="{% url 'cve_manager:fetch_cves' %}"
+       class="inline-flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Fetch from NVD
+    </a>
+</div>
+
+<!-- Severity Filter Tabs -->
+<div class="mb-6 flex flex-wrap gap-2">
+    <a href="{% url 'cve_manager:cve_list' %}"
+       class="px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors
+              {% if not severity_filter %}bg-primary-600 text-white{% else %}bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700{% endif %}">
+        All
+    </a>
+    <a href="?severity=CRITICAL"
+       class="px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors
+              {% if severity_filter == 'CRITICAL' %}bg-red-600 text-white{% else %}bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700{% endif %}">
+        Critical
+    </a>
+    <a href="?severity=HIGH"
+       class="px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors
+              {% if severity_filter == 'HIGH' %}bg-orange-600 text-white{% else %}bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700{% endif %}">
+        High
+    </a>
+    <a href="?severity=MEDIUM"
+       class="px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors
+              {% if severity_filter == 'MEDIUM' %}bg-yellow-600 text-white{% else %}bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700{% endif %}">
+        Medium
+    </a>
+    <a href="?severity=LOW"
+       class="px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors
+              {% if severity_filter == 'LOW' %}bg-emerald-600 text-white{% else %}bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700{% endif %}">
+        Low
+    </a>
+</div>
+
+<!-- CVE Table -->
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead class="bg-gray-50 dark:bg-gray-900/50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">CVE ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Severity</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">CVSS</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Published</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                {% for cve in cves %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <a href="{% url 'cve_manager:cve_detail' cve.pk %}" class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300">
+                            {{ cve.cve_id }}
+                        </a>
+                    </td>
+                    <td class="px-6 py-4">
+                        <p class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 max-w-md">{{ cve.description|truncatewords:25 }}</p>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            {% if cve.severity == 'CRITICAL' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
+                            {% elif cve.severity == 'HIGH' %}bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300
+                            {% elif cve.severity == 'MEDIUM' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300
+                            {% else %}bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300{% endif %}">
+                            {{ cve.get_severity_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm font-semibold
+                            {% if cve.cvss_score >= 9 %}text-red-600 dark:text-red-400
+                            {% elif cve.cvss_score >= 7 %}text-orange-600 dark:text-orange-400
+                            {% elif cve.cvss_score >= 4 %}text-yellow-600 dark:text-yellow-400
+                            {% else %}text-emerald-600 dark:text-emerald-400{% endif %}">
+                            {{ cve.cvss_score }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {{ cve.published_date|date:"M d, Y"|default:"N/A" }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-16 text-center">
+                        <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No CVEs found</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Click "Fetch from NVD" to import the latest vulnerabilities.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

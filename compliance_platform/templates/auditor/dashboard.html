@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Auditor Panel - ComplianceHub{% endblock %}
+{% block page_title %}Auditor Panel{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Stats row -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Pending</p>
+                    <p class="mt-1 text-2xl font-bold text-yellow-600 dark:text-yellow-400">{{ stats.pending }}</p>
+                </div>
+                <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Approved</p>
+                    <p class="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">{{ stats.approved }}</p>
+                </div>
+                <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Rejected</p>
+                    <p class="mt-1 text-2xl font-bold text-red-600 dark:text-red-400">{{ stats.rejected }}</p>
+                </div>
+                <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total</p>
+                    <p class="mt-1 text-2xl font-bold text-gray-800 dark:text-gray-100">{{ stats.total }}</p>
+                </div>
+                <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews table -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Pending Reviews</h3>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800/50">
+                    <tr>
+                        <th class="px-6 py-3 font-medium">Control</th>
+                        <th class="px-6 py-3 font-medium">Document</th>
+                        <th class="px-6 py-3 font-medium">Risk</th>
+                        <th class="px-6 py-3 font-medium">Status</th>
+                        <th class="px-6 py-3 font-medium">Reviewer</th>
+                        <th class="px-6 py-3 font-medium">Date</th>
+                        <th class="px-6 py-3 font-medium"></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for review in reviews %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="px-6 py-4">
+                            <span class="font-medium text-gray-800 dark:text-gray-200">{{ review.control.title }}</span>
+                        </td>
+                        <td class="px-6 py-4 text-gray-600 dark:text-gray-400">
+                            {% if review.document %}{{ review.document.title }}{% else %}<span class="text-gray-400 dark:text-gray-500">--</span>{% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-gray-600 dark:text-gray-400">
+                            {% if review.risk %}{{ review.risk.title }}{% else %}<span class="text-gray-400 dark:text-gray-500">--</span>{% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide
+                                {% if review.status == 'pending' %}bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300
+                                {% elif review.status == 'approved' %}bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300
+                                {% elif review.status == 'rejected' %}bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300
+                                {% else %}bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300
+                                {% endif %}">
+                                {{ review.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-gray-600 dark:text-gray-400">
+                            {% if review.reviewer %}{{ review.reviewer.username }}{% else %}<span class="text-gray-400 dark:text-gray-500">Unassigned</span>{% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-gray-500 dark:text-gray-400 text-xs">
+                            {{ review.created_at|date:"M d, Y" }}
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="{% url 'auditor:review_detail' review.pk %}"
+                               class="inline-flex items-center gap-1 text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors">
+                                Review
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                            <svg class="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <p class="text-sm">No pending reviews.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p /home/tbuser/comb/compliance_platform/threat_intel/management/commands)",
+      "Bash(touch /home/tbuser/comb/compliance_platform/threat_intel/management/__init__.py)",
+      "Bash(touch /home/tbuser/comb/compliance_platform/threat_intel/management/commands/__init__.py)",
+      "Bash(python manage.py makemigrations)",
+      "Bash(python3 manage.py makemigrations)",
+      "Bash(find:*)",
+      "Bash(ls -la /home/tbuser/comb/compliance_platform/*/migrations/)",
+      "Bash(grep -h \"^class\\\\|SOURCE_TYPES\\\\|INDUSTRY\\\\|AGENT_TYPES\" /home/tbuser/comb/compliance_platform/*/models.py)",
+      "Bash(ls *.py requirements*.txt)",
+      "Bash(pip3 list:*)",
+      "Bash(python3 -c \"import django\")",
+      "Bash(pip3 install:*)",
+      "Bash(python3:*)",
+      "Bash(python manage.py shell -c ':*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8000/)",
+      "Bash(zip -r /home/tbuser/comb/compliance_platform/COMB_Platform_Complete.zip compliance_platform/ settings.py urls.py wsgi.py asgi.py __init__.py manage.py requirements.txt templates/ core/ compliance/ vendors/ cve_manager/ risks/ alerts/ auditor/ ai_assist/ faq/ regulatory_intel/ threat_intel/ static/ -x '*/venv/*' '*/__pycache__/*' '*/db.sqlite3' '*/.claude/*' '*/compliance_platform_backup.zip' '*/COMB_Platform_Complete.zip')",
+      "Bash(pkill -f \"manage.py runserver\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8000/threat/)",
+      "Bash(pkill -f \"runserver\")",
+      "Bash(nohup python3:*)",
+      "Bash(fuser -k 8000/tcp)",
+      "Bash(rm -f compliance_platform/COMB_Platform_Complete.zip)",
+      "Bash(zip -r compliance_platform/COMB_Platform_Complete.zip compliance_platform/ settings.py urls.py wsgi.py asgi.py __init__.py manage.py requirements.txt templates/ core/ compliance/ vendors/ cve_manager/ risks/ alerts/ auditor/ ai_assist/ faq/ regulatory_intel/ threat_intel/ static/ -x '*/venv/*' '*/__pycache__/*' '*/db.sqlite3' '*/.claude/*' '*/compliance_platform_backup.zip' '*/COMB_Platform_Complete.zip')"
+    ]
+  }
+}

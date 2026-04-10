@@ -1,0 +1,62 @@
+{% extends "regulatory_intel/base.html" %}
+{% block title %}Documents{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-white">Regulatory Documents</h1>
+    <a href="{% url 'regulatory_intel:upload_document' %}" class="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold shadow-lg shadow-indigo-500/25 transition-all hover:from-indigo-500 hover:to-purple-500 flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Upload
+    </a>
+</div>
+<!-- Filters -->
+<div class="glass rounded-2xl p-4 mb-6 flex flex-wrap gap-3 items-center">
+    <form method="get" class="flex flex-wrap gap-3 items-center w-full">
+        <input type="text" name="q" value="{{ search_query }}" placeholder="Search documents..." class="flex-1 min-w-[200px] px-4 py-2 rounded-xl bg-white/10 border border-white/10 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <select name="impact" class="px-3 py-2 rounded-xl bg-white/10 border border-white/10 text-sm text-gray-300 focus:outline-none">
+            <option value="">All Impact</option>
+            <option value="critical" {% if current_impact == 'critical' %}selected{% endif %}>Critical</option>
+            <option value="high" {% if current_impact == 'high' %}selected{% endif %}>High</option>
+            <option value="medium" {% if current_impact == 'medium' %}selected{% endif %}>Medium</option>
+            <option value="low" {% if current_impact == 'low' %}selected{% endif %}>Low</option>
+        </select>
+        <select name="type" class="px-3 py-2 rounded-xl bg-white/10 border border-white/10 text-sm text-gray-300 focus:outline-none">
+            <option value="">All Types</option>
+            <option value="circular" {% if current_type == 'circular' %}selected{% endif %}>Circular</option>
+            <option value="notification" {% if current_type == 'notification' %}selected{% endif %}>Notification</option>
+            <option value="master_direction" {% if current_type == 'master_direction' %}selected{% endif %}>Master Direction</option>
+            <option value="act" {% if current_type == 'act' %}selected{% endif %}>Act/Statute</option>
+        </select>
+        <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 transition">Filter</button>
+    </form>
+</div>
+<!-- Document List -->
+{% if documents %}
+<div class="space-y-3">
+    {% for doc in documents %}
+    <a href="{% url 'regulatory_intel:document_detail' doc.pk %}" class="block glass rounded-2xl p-5 card-hover impact-{{ doc.impact_level }}">
+        <div class="flex items-start justify-between">
+            <div class="flex-1 min-w-0">
+                <h3 class="text-sm font-semibold text-white">{{ doc.title }}</h3>
+                <div class="flex flex-wrap items-center gap-2 mt-2">
+                    <span class="text-xs px-2 py-0.5 rounded-full {% if doc.impact_level == 'critical' %}bg-red-500/20 text-red-300{% elif doc.impact_level == 'high' %}bg-amber-500/20 text-amber-300{% elif doc.impact_level == 'medium' %}bg-blue-500/20 text-blue-300{% else %}bg-emerald-500/20 text-emerald-300{% endif %}">{{ doc.get_impact_level_display }}</span>
+                    <span class="text-xs text-gray-500">{{ doc.get_doc_type_display }}</span>
+                    {% if doc.source %}<span class="text-xs text-gray-500">· {{ doc.source.name }}</span>{% endif %}
+                    {% if doc.published_date %}<span class="text-xs text-gray-500">· {{ doc.published_date }}</span>{% endif %}
+                    {% if doc.categories %}<span class="text-xs text-gray-500">· {{ doc.categories }}</span>{% endif %}
+                </div>
+            </div>
+            <div class="flex items-center gap-2 ml-3 flex-shrink-0">
+                {% if doc.is_new %}<span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/30 text-indigo-300 font-medium">NEW</span>{% endif %}
+                {% if doc.is_processed %}<span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">Analyzed</span>{% endif %}
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="glass rounded-2xl p-16 text-center">
+    <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    <p class="text-gray-400">No documents found. Try a scan or upload one.</p>
+</div>
+{% endif %}
+{% endblock %}

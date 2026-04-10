@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Invite Team Member - ComplianceHub{% endblock %}
+{% block page_title %}Invite Team Member{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <!-- Back Link -->
+    <a href="{% url 'org_users' %}" class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Team Members
+    </a>
+
+    <!-- Form Card -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Invite a New Team Member</h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Create an account for a new user in your organization.</p>
+        </div>
+
+        <form method="post" class="p-6 space-y-5">
+            {% csrf_token %}
+
+            <!-- Username -->
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Username</label>
+                <input type="text" name="username" id="username" required
+                       class="w-full px-3.5 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                       placeholder="e.g. john.doe">
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email Address</label>
+                <input type="email" name="email" id="email" required
+                       class="w-full px-3.5 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                       placeholder="john.doe@company.com">
+            </div>
+
+            <!-- Password -->
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Temporary Password</label>
+                <input type="password" name="password" id="password" required minlength="8"
+                       class="w-full px-3.5 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                       placeholder="Minimum 8 characters">
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">The user should change this password after first login.</p>
+            </div>
+
+            <!-- Role -->
+            <div>
+                <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Role</label>
+                <select name="role" id="role" required
+                        class="w-full px-3.5 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+                    {% for value, label in roles %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Role Descriptions -->
+            <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-3">
+                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Role Descriptions</p>
+                <div class="space-y-2.5">
+                    <div class="flex gap-3">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 flex-shrink-0 h-5 mt-0.5">Client Admin</span>
+                        <p class="text-xs text-gray-600 dark:text-gray-400">Full administrative access. Can manage users, settings, and all compliance data.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 flex-shrink-0 h-5 mt-0.5">Compliance Mgr</span>
+                        <p class="text-xs text-gray-600 dark:text-gray-400">Manages compliance controls, documents, and frameworks. Cannot manage users.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 flex-shrink-0 h-5 mt-0.5">Auditor</span>
+                        <p class="text-xs text-gray-600 dark:text-gray-400">Read-only access to compliance data. Can create and manage audit reports.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 flex-shrink-0 h-5 mt-0.5">Vendor User</span>
+                        <p class="text-xs text-gray-600 dark:text-gray-400">Limited access for external vendor users. Can view and respond to vendor assessments.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <a href="{% url 'org_users' %}"
+                   class="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="px-5 py-2.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm transition-colors">
+                    Create User
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Document - ComplianceHub{% endblock %}
+{% block page_title %}Upload Document{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
+    <a href="{% url 'compliance:document_list' %}" class="hover:text-indigo-600 dark:hover:text-indigo-400">Documents</a>
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <span class="text-gray-800 dark:text-gray-200 font-medium">Upload</span>
+</nav>
+
+<div class="max-w-2xl">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Title -->
+            <div>
+                <label for="id_title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+                <input type="text" name="title" id="id_title"
+                       value="{{ form.title.value|default:'' }}"
+                       class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                       placeholder="e.g. Information Security Policy v2.1"
+                       required>
+                {% if form.title.errors %}
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.title.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Document Type -->
+            <div>
+                <label for="id_doc_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Document Type</label>
+                <select name="doc_type" id="id_doc_type"
+                        class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                        required>
+                    <option value="">Select type...</option>
+                    <option value="policy" {% if form.doc_type.value == "policy" %}selected{% endif %}>Policy</option>
+                    <option value="sop" {% if form.doc_type.value == "sop" %}selected{% endif %}>SOP</option>
+                    <option value="evidence" {% if form.doc_type.value == "evidence" %}selected{% endif %}>Evidence</option>
+                </select>
+                {% if form.doc_type.errors %}
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.doc_type.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- File Upload -->
+            <div>
+                <label for="id_file" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">File</label>
+                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors">
+                    <div class="space-y-1 text-center">
+                        <svg class="mx-auto h-10 w-10 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                        </svg>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                            <label for="id_file" class="relative cursor-pointer rounded-md font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 focus-within:outline-none">
+                                <span>Click to upload</span>
+                                <input type="file" name="file" id="id_file" class="sr-only" required>
+                            </label>
+                            <span class="pl-1">or drag and drop</span>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">PDF, DOCX, XLS, or TXT up to 10MB</p>
+                    </div>
+                </div>
+                <p id="file-name" class="mt-2 text-sm text-indigo-600 dark:text-indigo-400 hidden"></p>
+                {% if form.file.errors %}
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.file.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- External Storage Link -->
+            <div>
+                <label for="id_storage_link" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    External Storage Link
+                    <span class="text-xs text-gray-400 dark:text-gray-500 font-normal">(optional)</span>
+                </label>
+                <input type="url" name="storage_link" id="id_storage_link"
+                       value="{{ form.storage_link.value|default:'' }}"
+                       class="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                       placeholder="https://drive.google.com/... or s3://...">
+                {% if form.storage_link.errors %}
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.storage_link.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Controls Multi-Select -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Map to Controls
+                    <span class="text-xs text-gray-400 dark:text-gray-500 font-normal">(select all that apply)</span>
+                </label>
+                <div class="max-h-64 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-3 space-y-2 bg-gray-50 dark:bg-gray-750">
+                    {% for checkbox in form.controls %}
+                    <label class="flex items-start gap-3 p-2 rounded-lg hover:bg-white dark:hover:bg-gray-700 cursor-pointer transition-colors">
+                        <input type="checkbox" name="controls" value="{{ checkbox.data.value }}"
+                               {% if checkbox.data.selected %}checked{% endif %}
+                               class="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ checkbox.data.label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% if form.controls.errors %}
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.controls.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Submit -->
+            <div class="flex items-center gap-3 pt-2">
+                <button type="submit"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                    Upload Document
+                </button>
+                <a href="{% url 'compliance:document_list' %}"
+                   class="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg transition-colors">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Show selected file name
+    document.getElementById('id_file')?.addEventListener('change', function(e) {
+        const fileName = e.target.files[0]?.name;
+        const fileNameEl = document.getElementById('file-name');
+        if (fileName && fileNameEl) {
+            fileNameEl.textContent = 'Selected: ' + fileName;
+            fileNameEl.classList.remove('hidden');
+        }
+    });
+</script>
+{% endblock %}

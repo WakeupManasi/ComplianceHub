@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Review: {{ review.control.title }} - ComplianceHub{% endblock %}
+{% block page_title %}Review Detail{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Back link -->
+    <a href="{% url 'auditor:dashboard' %}" class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Auditor Panel
+    </a>
+
+    <!-- Status banner -->
+    <div class="flex items-center gap-3">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide
+            {% if review.status == 'pending' %}bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300
+            {% elif review.status == 'approved' %}bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300
+            {% elif review.status == 'rejected' %}bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300
+            {% else %}bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300
+            {% endif %}">
+            {{ review.get_status_display }}
+        </span>
+        {% if review.reviewer %}
+        <span class="text-sm text-gray-500 dark:text-gray-400">
+            Reviewed by <span class="font-medium text-gray-700 dark:text-gray-300">{{ review.reviewer.username }}</span>
+            {% if review.reviewed_at %} on {{ review.reviewed_at|date:"M d, Y H:i" }}{% endif %}
+        </span>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Control details -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                    <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Control</h3>
+                </div>
+            </div>
+            <div class="p-6 space-y-3">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Title</p>
+                    <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ review.control.title }}</p>
+                </div>
+                {% if review.control.description %}
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Description</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ review.control.description }}</p>
+                </div>
+                {% endif %}
+                {% if review.control.clause %}
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Clause</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ review.control.clause }}</p>
+                </div>
+                {% endif %}
+                {% if review.control.framework %}
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Framework</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ review.control.framework }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Document details -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                    <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Document</h3>
+                </div>
+            </div>
+            <div class="p-6">
+                {% if review.document %}
+                <div class="space-y-3">
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Title</p>
+                        <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ review.document.title }}</p>
+                    </div>
+                    {% if review.document.doc_type %}
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Type</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">{{ review.document.get_doc_type_display }}</p>
+                    </div>
+                    {% endif %}
+                    {% if review.document.file %}
+                    <div>
+                        <a href="{{ review.document.file.url }}"
+                           class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/40 rounded-lg transition-colors"
+                           target="_blank">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Download Document
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-400 dark:text-gray-500 italic">No document attached to this review.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Risk details -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Risk</h3>
+                </div>
+            </div>
+            <div class="p-6">
+                {% if review.risk %}
+                <div class="space-y-3">
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Title</p>
+                        <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ review.risk.title }}</p>
+                    </div>
+                    {% if review.risk.severity %}
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Severity</p>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide
+                            {% if review.risk.severity == 'critical' %}bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300
+                            {% elif review.risk.severity == 'high' %}bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300
+                            {% elif review.risk.severity == 'medium' %}bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300
+                            {% else %}bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300
+                            {% endif %}">
+                            {{ review.risk.get_severity_display }}
+                        </span>
+                    </div>
+                    {% endif %}
+                    {% if review.risk.mitigation_status %}
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Mitigation Status</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">{{ review.risk.get_mitigation_status_display }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-400 dark:text-gray-500 italic">No risk linked to this review.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Comments -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                    </svg>
+                    <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Comments</h3>
+                </div>
+            </div>
+            <div class="p-6">
+                {% if review.comments %}
+                <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{{ review.comments }}</p>
+                {% else %}
+                <p class="text-sm text-gray-400 dark:text-gray-500 italic">No comments yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Action buttons (only for auditors when pending) -->
+    {% if review.status == 'pending' and user.role == 'auditor' %}
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-4">Review Actions</h3>
+
+        <div class="flex flex-col sm:flex-row gap-4">
+            <!-- Approve -->
+            <form method="post" action="{% url 'auditor:approve_review' review.pk %}" class="flex-1">
+                {% csrf_token %}
+                <input type="hidden" name="comments" value="">
+                <button type="submit"
+                        class="w-full inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Approve
+                </button>
+            </form>
+
+            <!-- Reject (with comment) -->
+            <div class="flex-1">
+                <button type="button" onclick="document.getElementById('reject-form').classList.toggle('hidden')"
+                        class="w-full inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Reject
+                </button>
+
+                <form id="reject-form" method="post" action="{% url 'auditor:reject_review' review.pk %}" class="hidden mt-3 space-y-3">
+                    {% csrf_token %}
+                    <textarea name="comments" rows="3" required
+                              placeholder="Please provide a reason for rejection..."
+                              class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-700 dark:text-gray-200 px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-red-500 placeholder-gray-400 dark:placeholder-gray-500"></textarea>
+                    <button type="submit"
+                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
+                        Confirm Rejection
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

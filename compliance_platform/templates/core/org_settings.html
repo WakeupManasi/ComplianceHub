@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Organization Settings - ComplianceHub{% endblock %}
+{% block page_title %}Organization Settings{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+    <!-- Header -->
+    <div>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Organization Settings</h2>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage your organization profile and preferences.</p>
+    </div>
+
+    <!-- Organization Info Card -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Organization Profile</h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Basic information about your organization.</p>
+        </div>
+
+        <form method="post" class="p-6 space-y-5">
+            {% csrf_token %}
+
+            <!-- Name (editable) -->
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Organization Name</label>
+                <input type="text" name="name" id="name" value="{{ organization.name }}" required
+                       class="w-full px-3.5 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+            </div>
+
+            <!-- Industry (display only) -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Industry</label>
+                <div class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-400 cursor-not-allowed">
+                    {{ organization.get_industry_display }}
+                </div>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Industry cannot be changed after onboarding.</p>
+            </div>
+
+            <!-- Country (editable) -->
+            <div>
+                <label for="country" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Country</label>
+                <input type="text" name="country" id="country" value="{{ organization.country }}" required
+                       class="w-full px-3.5 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+            </div>
+
+            <!-- Company Size (display only) -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Company Size</label>
+                <div class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-400 cursor-not-allowed">
+                    {{ organization.get_company_size_display }} employees
+                </div>
+            </div>
+
+            <!-- Created Date (display only) -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Created</label>
+                <div class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-400 cursor-not-allowed">
+                    {{ organization.created_at|date:"F d, Y" }}
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div class="flex items-center justify-end pt-2">
+                <button type="submit"
+                        class="px-5 py-2.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm transition-colors">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Organization Stats -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Organization Overview</h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Key metrics for your organization.</p>
+        </div>
+
+        <div class="p-6">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <!-- Total Users -->
+                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-center">
+                    <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 mb-3">
+                        <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </div>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ organization.user_set.count }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Total Users</p>
+                </div>
+
+                <!-- Risk Score / Compliance -->
+                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-center">
+                    <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 mb-3">
+                        <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                    </div>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ organization.risk_score }}%</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Risk Score</p>
+                </div>
+
+                <!-- Data Sensitivity -->
+                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-center">
+                    <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 mb-3">
+                        <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white capitalize">{{ organization.data_sensitivity }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Data Sensitivity</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-red-200 dark:border-red-900/50 shadow-sm">
+        <div class="px-6 py-5 border-b border-red-200 dark:border-red-900/50">
+            <h3 class="text-lg font-semibold text-red-600 dark:text-red-400">Danger Zone</h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Irreversible and destructive actions.</p>
+        </div>
+        <div class="p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">Delete Organization</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Permanently delete this organization and all associated data. This action cannot be undone.</p>
+                </div>
+                <button disabled
+                        class="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg opacity-50 cursor-not-allowed"
+                        title="Contact support to delete your organization">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

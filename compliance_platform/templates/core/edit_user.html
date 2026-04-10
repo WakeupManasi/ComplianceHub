@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Edit User - ComplianceHub{% endblock %}
+{% block page_title %}Edit User{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <!-- Back Link -->
+    <a href="{% url 'org_users' %}" class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Team Members
+    </a>
+
+    <!-- User Info Card -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center gap-4">
+                <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold text-white
+                    {% if target_user.role == 'super_admin' %}bg-purple-500
+                    {% elif target_user.role == 'client_admin' %}bg-indigo-500
+                    {% elif target_user.role == 'compliance_manager' %}bg-blue-500
+                    {% elif target_user.role == 'auditor' %}bg-emerald-500
+                    {% else %}bg-amber-500{% endif %}">
+                    {{ target_user.username|make_list|first|upper }}
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ target_user.username }}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ target_user.email|default:"No email set" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Details -->
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+            <dl class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Current Role</dt>
+                    <dd class="mt-1">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            {% if target_user.role == 'super_admin' %}bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300
+                            {% elif target_user.role == 'client_admin' %}bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300
+                            {% elif target_user.role == 'compliance_manager' %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
+                            {% elif target_user.role == 'auditor' %}bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300
+                            {% else %}bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300{% endif %}">
+                            {{ target_user.get_role_display }}
+                        </span>
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Status</dt>
+                    <dd class="mt-1">
+                        {% if target_user.is_active %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Active
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                            <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                            Inactive
+                        </span>
+                        {% endif %}
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Date Joined</dt>
+                    <dd class="mt-1 text-gray-900 dark:text-white">{{ target_user.date_joined|date:"M d, Y" }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Last Login</dt>
+                    <dd class="mt-1 text-gray-900 dark:text-white">{{ target_user.last_login|date:"M d, Y H:i"|default:"Never" }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Edit Form -->
+        <form method="post" class="p-6 space-y-5">
+            {% csrf_token %}
+
+            <div>
+                <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">New Role</label>
+                <select name="role" id="role" required
+                        class="w-full px-3.5 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+                    {% for value, label in roles %}
+                    <option value="{{ value }}" {% if target_user.role == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <a href="{% url 'org_users' %}"
+                   class="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="px-5 py-2.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm transition-colors">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

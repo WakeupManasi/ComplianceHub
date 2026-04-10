@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - ComplianceHub{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- ===== Stat Cards Row ===== -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+    <!-- Compliance % -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex-shrink-0">
+                <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ compliance_percentage|default:"0" }}%</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Compliance</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Risks -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex-shrink-0">
+                <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ active_risks|default:"0" }}</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Active Risks</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CVEs Tracked -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex-shrink-0">
+                <svg class="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ cve_count|default:"0" }}</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">CVEs Tracked</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendors -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex-shrink-0">
+                <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ vendor_count|default:"0" }}</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Vendors</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unread Alerts -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex-shrink-0">
+                <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ unread_alerts|default:"0" }}</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Unread Alerts</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Charts Row ===== -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+    <!-- Compliance Overview (Doughnut) -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+        <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Compliance Overview</h3>
+        <div class="flex items-center justify-center" style="height: 280px;">
+            <canvas id="complianceChart"></canvas>
+        </div>
+        <div class="flex items-center justify-center gap-6 mt-4 text-sm">
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                <span class="text-gray-600 dark:text-gray-400">Covered ({{ covered_controls|default:"0" }})</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-gray-300 dark:bg-gray-600"></span>
+                <span class="text-gray-600 dark:text-gray-400">Missing ({{ missing_controls|default:"0" }})</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Distribution (Bar) -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+        <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Risk Distribution by Severity</h3>
+        <div style="height: 280px;">
+            <canvas id="riskChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Tables Row ===== -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <!-- Recent Alerts -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white">Recent Alerts</h3>
+            <a href="/alerts/" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors">
+                View all &rarr;
+            </a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <th class="text-left py-2.5 px-3 font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Alert</th>
+                        <th class="text-left py-2.5 px-3 font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Severity</th>
+                        <th class="text-left py-2.5 px-3 font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Date</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
+                    {% for alert in recent_alerts %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                        <td class="py-2.5 px-3 text-gray-900 dark:text-gray-200">
+                            <div class="flex items-center gap-2">
+                                {% if not alert.is_read %}
+                                <span class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></span>
+                                {% endif %}
+                                <span class="truncate max-w-[200px]">{{ alert.title }}</span>
+                            </div>
+                        </td>
+                        <td class="py-2.5 px-3">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                {% if alert.severity == 'critical' %}bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300
+                                {% elif alert.severity == 'high' %}bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300
+                                {% elif alert.severity == 'medium' %}bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300
+                                {% else %}bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300
+                                {% endif %}">
+                                {{ alert.severity|title }}
+                            </span>
+                        </td>
+                        <td class="py-2.5 px-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ alert.created_at|date:"M d" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="py-8 text-center text-gray-400 dark:text-gray-500">
+                            <svg class="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                            </svg>
+                            No alerts yet
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Recent CVEs -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white">Recent CVEs</h3>
+            <a href="/cve/" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors">
+                View all &rarr;
+            </a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <th class="text-left py-2.5 px-3 font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">CVE ID</th>
+                        <th class="text-left py-2.5 px-3 font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Severity</th>
+                        <th class="text-left py-2.5 px-3 font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Published</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
+                    {% for cve in recent_cves %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                        <td class="py-2.5 px-3">
+                            <span class="font-mono text-sm text-gray-900 dark:text-gray-200">{{ cve.cve_id }}</span>
+                        </td>
+                        <td class="py-2.5 px-3">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                {% if cve.severity == 'CRITICAL' %}bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300
+                                {% elif cve.severity == 'HIGH' %}bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300
+                                {% elif cve.severity == 'MEDIUM' %}bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300
+                                {% else %}bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300
+                                {% endif %}">
+                                {{ cve.severity|title }}
+                            </span>
+                        </td>
+                        <td class="py-2.5 px-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ cve.published_date|date:"M d" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="py-8 text-center text-gray-400 dark:text-gray-500">
+                            <svg class="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                            No CVEs tracked yet
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const isDark = document.documentElement.classList.contains('dark');
+    const textColor = isDark ? '#d1d5db' : '#6b7280';
+    const gridColor = isDark ? 'rgba(75, 85, 99, 0.3)' : 'rgba(229, 231, 235, 0.8)';
+
+    // --- Compliance Doughnut Chart ---
+    const coveredControls = {{ covered_controls|default:"0" }};
+    const missingControls = {{ missing_controls|default:"0" }};
+
+    const complianceCtx = document.getElementById('complianceChart');
+    if (complianceCtx) {
+        new Chart(complianceCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Covered Controls', 'Missing Controls'],
+                datasets: [{
+                    data: [coveredControls, missingControls],
+                    backgroundColor: ['#10b981', isDark ? '#4b5563' : '#d1d5db'],
+                    borderColor: isDark ? '#1f2937' : '#ffffff',
+                    borderWidth: 3,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: isDark ? '#374151' : '#1f2937',
+                        titleColor: '#f9fafb',
+                        bodyColor: '#d1d5db',
+                        cornerRadius: 8,
+                        padding: 12
+                    }
+                }
+            }
+        });
+    }
+
+    // --- Risk Distribution Bar Chart ---
+    const riskData = {
+        critical: {{ risks_by_severity.critical|default:"0" }},
+        high: {{ risks_by_severity.high|default:"0" }},
+        medium: {{ risks_by_severity.medium|default:"0" }},
+        low: {{ risks_by_severity.low|default:"0" }}
+    };
+
+    const riskCtx = document.getElementById('riskChart');
+    if (riskCtx) {
+        new Chart(riskCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Critical', 'High', 'Medium', 'Low'],
+                datasets: [{
+                    label: 'Risks',
+                    data: [riskData.critical, riskData.high, riskData.medium, riskData.low],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(249, 115, 22, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(59, 130, 246, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgb(239, 68, 68)',
+                        'rgb(249, 115, 22)',
+                        'rgb(245, 158, 11)',
+                        'rgb(59, 130, 246)'
+                    ],
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    barPercentage: 0.6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: isDark ? '#374151' : '#1f2937',
+                        titleColor: '#f9fafb',
+                        bodyColor: '#d1d5db',
+                        cornerRadius: 8,
+                        padding: 12
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: textColor,
+                            stepSize: 1,
+                            font: { size: 12 }
+                        },
+                        grid: { color: gridColor }
+                    },
+                    x: {
+                        ticks: {
+                            color: textColor,
+                            font: { size: 12 }
+                        },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

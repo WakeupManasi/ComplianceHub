@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Schedule Audit - ComplianceHub{% endblock %}
+{% block page_title %}Schedule New Audit{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
+        <a href="{% url 'auditor:audit_list' %}" class="hover:text-primary-600 dark:hover:text-primary-400">Audits</a>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        <span class="text-gray-900 dark:text-white font-medium">Schedule New Audit</span>
+    </nav>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Audit Details</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Define the scope, timeline, and team for this audit.</p>
+        </div>
+
+        <form method="post" class="p-6 space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                {% for error in form.non_field_errors %}
+                <p class="text-sm text-red-700 dark:text-red-300">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Title -->
+            <div>
+                <label for="id_title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Audit Title <span class="text-red-500">*</span></label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.title.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Type and Framework -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                    <label for="id_audit_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Audit Type <span class="text-red-500">*</span></label>
+                    {{ form.audit_type }}
+                    {% if form.audit_type.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.audit_type.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="id_framework" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Framework</label>
+                    {{ form.framework }}
+                    {% if form.framework.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.framework.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Scope -->
+            <div>
+                <label for="id_scope" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Scope</label>
+                {{ form.scope }}
+                {% if form.scope.errors %}
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.scope.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Objectives -->
+            <div>
+                <label for="id_objectives" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Objectives</label>
+                {{ form.objectives }}
+                {% if form.objectives.errors %}
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.objectives.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Dates -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                    <label for="id_scheduled_start" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Start Date <span class="text-red-500">*</span></label>
+                    {{ form.scheduled_start }}
+                    {% if form.scheduled_start.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.scheduled_start.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="id_scheduled_end" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">End Date <span class="text-red-500">*</span></label>
+                    {{ form.scheduled_end }}
+                    {% if form.scheduled_end.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.scheduled_end.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Lead Auditor -->
+            <div>
+                <label for="id_lead_auditor" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Lead Auditor</label>
+                {{ form.lead_auditor }}
+                {% if form.lead_auditor.errors %}
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.lead_auditor.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <a href="{% url 'auditor:audit_list' %}"
+                   class="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="px-6 py-2.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm">
+                    Schedule Audit
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

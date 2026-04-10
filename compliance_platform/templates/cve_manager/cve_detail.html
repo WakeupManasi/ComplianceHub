@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}{{ cve.cve_id }} - ComplianceHub{% endblock %}
+{% block page_title %}{{ cve.cve_id }}{% endblock %}
+
+{% block content %}
+<!-- Action bar -->
+<div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <a href="{% url 'cve_manager:cve_list' %}" class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to CVE Feed
+    </a>
+    <button id="ai-explain-btn" onclick="aiExplain()"
+            class="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-1.591 1.591a2.25 2.25 0 01-1.591.659H8.182a2.25 2.25 0 01-1.591-.659L5 14.5m14 0V19a2 2 0 01-2 2H7a2 2 0 01-2-2v-4.5"/>
+        </svg>
+        AI Explain
+    </button>
+</div>
+
+<!-- AI Explanation Panel (hidden by default) -->
+<div id="ai-explanation" class="hidden mb-6 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800 p-5">
+    <div class="flex items-start gap-3">
+        <svg class="w-5 h-5 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5"/>
+        </svg>
+        <div class="flex-1">
+            <h3 class="text-sm font-semibold text-purple-900 dark:text-purple-200 mb-2">AI Analysis</h3>
+            <div id="ai-explanation-content" class="text-sm text-purple-800 dark:text-purple-300 whitespace-pre-line">
+                Analyzing...
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- CVE Info Card -->
+    <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Vulnerability Details</h2>
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                    {% if cve.severity == 'CRITICAL' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
+                    {% elif cve.severity == 'HIGH' %}bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300
+                    {% elif cve.severity == 'MEDIUM' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300
+                    {% else %}bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300{% endif %}">
+                    {{ cve.get_severity_display }}
+                </span>
+                <span class="text-lg font-bold
+                    {% if cve.cvss_score >= 9 %}text-red-600 dark:text-red-400
+                    {% elif cve.cvss_score >= 7 %}text-orange-600 dark:text-orange-400
+                    {% elif cve.cvss_score >= 4 %}text-yellow-600 dark:text-yellow-400
+                    {% else %}text-emerald-600 dark:text-emerald-400{% endif %}">
+                    {{ cve.cvss_score }}
+                </span>
+            </div>
+        </div>
+        <div class="p-6 space-y-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">CVE ID</dt>
+                    <dd class="text-sm text-gray-900 dark:text-gray-100 font-mono font-medium">{{ cve.cve_id }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">CVSS Score</dt>
+                    <dd class="text-sm text-gray-900 dark:text-gray-100 font-medium">{{ cve.cvss_score }} / 10.0</dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Published</dt>
+                    <dd class="text-sm text-gray-900 dark:text-gray-100">{{ cve.published_date|date:"M d, Y H:i"|default:"N/A" }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Last Modified</dt>
+                    <dd class="text-sm text-gray-900 dark:text-gray-100">{{ cve.last_modified|date:"M d, Y H:i"|default:"N/A" }}</dd>
+                </div>
+            </div>
+            <div>
+                <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Description</dt>
+                <dd class="text-sm text-gray-900 dark:text-gray-100 leading-relaxed">{{ cve.description }}</dd>
+            </div>
+            {% if cve.affected_products %}
+            <div>
+                <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Affected Products</dt>
+                <dd class="text-sm text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 font-mono text-xs whitespace-pre-line break-all">{{ cve.affected_products }}</dd>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Sidebar: Mapped Controls & Map Form -->
+    <div class="space-y-6">
+        <!-- Mapped Controls -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Mapped Controls</h2>
+            </div>
+            <div class="p-4">
+                {% if mapped_controls %}
+                <ul class="space-y-2">
+                    {% for control in mapped_controls %}
+                    <li class="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <svg class="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ control.title }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No controls mapped yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Map to Additional Controls -->
+        {% if available_controls %}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Map to Controls</h2>
+            </div>
+            <form method="post" action="{% url 'cve_manager:map_cve_to_control' cve.pk %}" class="p-4">
+                {% csrf_token %}
+                <select name="control_ids" multiple size="5"
+                        class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-400 transition-colors">
+                    {% for control in available_controls %}
+                    <option value="{{ control.pk }}">{{ control.title }}</option>
+                    {% endfor %}
+                </select>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1.5 mb-3">Hold Ctrl/Cmd to select multiple controls.</p>
+                <button type="submit"
+                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                    </svg>
+                    Map Selected
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function aiExplain() {
+    const panel = document.getElementById('ai-explanation');
+    const content = document.getElementById('ai-explanation-content');
+    const btn = document.getElementById('ai-explain-btn');
+
+    panel.classList.remove('hidden');
+    content.textContent = 'Analyzing this CVE...';
+    btn.disabled = true;
+    btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+    fetch('/ai/explain/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
+        },
+        body: JSON.stringify({
+            context_type: 'cve',
+            context_id: '{{ cve.pk }}',
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        content.textContent = data.explanation || data.error || 'No explanation available.';
+    })
+    .catch(err => {
+        content.textContent = 'Failed to get AI explanation. Please try again.';
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    });
+}
+</script>
+{% endblock %}

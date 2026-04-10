@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}{{ document.title }} - ComplianceHub{% endblock %}
+{% block page_title %}{{ document.title }}{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
+    <a href="{% url 'compliance:document_list' %}" class="hover:text-indigo-600 dark:hover:text-indigo-400">Documents</a>
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <span class="text-gray-800 dark:text-gray-200 font-medium">{{ document.title }}</span>
+</nav>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Main Content -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Document Info -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="flex items-start justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Document Information</h2>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
+                             {% if document.doc_type == 'policy' %}bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300
+                             {% elif document.doc_type == 'sop' %}bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300
+                             {% else %}bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300{% endif %}">
+                    {{ document.get_doc_type_display }}
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div class="bg-gray-50 dark:bg-gray-750 rounded-lg p-4">
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Uploaded By</p>
+                    <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ document.uploaded_by.username }}</p>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-750 rounded-lg p-4">
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Upload Date</p>
+                    <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ document.uploaded_at|date:"F d, Y \a\t H:i" }}</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-3">
+                {% if document.file %}
+                <a href="{{ document.file.url }}"
+                   class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors"
+                   download>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Download File
+                </a>
+                {% endif %}
+                {% if document.storage_link %}
+                <a href="{{ document.storage_link }}" target="_blank" rel="noopener noreferrer"
+                   class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                    Open External Link
+                </a>
+                {% endif %}
+                {% if document.file %}
+                <a href="{% url 'compliance:verify_document' document.pk %}"
+                   class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 rounded-lg transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    Verify Integrity
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Checksum Information -->
+        {% if document.checksum_sha256 %}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Checksum Verification</h2>
+                {% if document.is_verified %}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    Verified
+                </span>
+                {% else %}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                    Unverified
+                </span>
+                {% endif %}
+            </div>
+
+            <div class="space-y-3">
+                <div class="bg-gray-50 dark:bg-gray-750 rounded-lg p-4">
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">SHA-256</p>
+                    <p class="text-xs font-mono text-gray-800 dark:text-gray-200 break-all">{{ document.checksum_sha256 }}</p>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-750 rounded-lg p-4">
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">MD5</p>
+                    <p class="text-xs font-mono text-gray-800 dark:text-gray-200 break-all">{{ document.checksum_md5 }}</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="bg-gray-50 dark:bg-gray-750 rounded-lg p-4">
+                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">File Size</p>
+                        <p class="text-sm font-medium text-gray-800 dark:text-gray-200">
+                            {% widthratio document.file_size 1048576 1 %} MB
+                            <span class="text-xs text-gray-500 dark:text-gray-400">({{ document.file_size|filesizeformat }})</span>
+                        </p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-750 rounded-lg p-4">
+                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Version</p>
+                        <p class="text-sm font-medium text-gray-800 dark:text-gray-200">v{{ document.version }}</p>
+                    </div>
+                </div>
+            </div>
+
+            {% if document.is_verified and document.verified_by %}
+            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Verified by <span class="font-medium text-gray-700 dark:text-gray-300">{{ document.verified_by.username }}</span>
+                    on {{ document.verified_at|date:"F d, Y \a\t H:i" }}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Mapped Controls -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Mapped Controls</h2>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
+                    {{ mapped_controls|length }}
+                </span>
+            </div>
+            {% if mapped_controls %}
+            <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for control in mapped_controls %}
+                <li class="py-3 flex items-center justify-between">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <span class="flex-shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
+                            </svg>
+                        </span>
+                        <div class="min-w-0">
+                            <a href="{% url 'compliance:control_detail' control.pk %}" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 truncate block">
+                                {{ control.title }}
+                            </a>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ control.clause.number }} &middot; {{ control.framework.name }}</p>
+                        </div>
+                    </div>
+                    {% if control.is_mandatory %}
+                    <span class="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
+                        Mandatory
+                    </span>
+                    {% else %}
+                    <span class="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                        Optional
+                    </span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-6">No controls mapped to this document.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+        <!-- Compliance Impact -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-4">Compliance Impact</h3>
+
+            <div class="text-center mb-4">
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-full border-4
+                            {% if compliance_pct >= 75 %}border-emerald-500
+                            {% elif compliance_pct >= 50 %}border-amber-500
+                            {% else %}border-red-500{% endif %}">
+                    <span class="text-2xl font-bold text-gray-800 dark:text-gray-100">{{ compliance_pct }}%</span>
+                </div>
+            </div>
+
+            <p class="text-sm text-gray-600 dark:text-gray-300 text-center mb-4">
+                This document covers <span class="font-semibold text-gray-800 dark:text-gray-100">{{ mapped_controls|length }}</span>
+                of <span class="font-semibold text-gray-800 dark:text-gray-100">{{ total_controls }}</span> controls.
+            </p>
+
+            <div class="bg-gray-50 dark:bg-gray-750 rounded-lg p-4">
+                <div class="flex justify-between text-sm mb-2">
+                    <span class="text-gray-500 dark:text-gray-400">Overall coverage</span>
+                    <span class="font-medium text-gray-800 dark:text-gray-200">{{ controls_with_docs }}/{{ total_controls }}</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                    <div class="h-2 rounded-full transition-all duration-500
+                                {% if compliance_pct >= 75 %}bg-emerald-500
+                                {% elif compliance_pct >= 50 %}bg-amber-500
+                                {% else %}bg-red-500{% endif %}"
+                         style="width: {{ compliance_pct }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Info -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">Quick Info</h3>
+            <dl class="space-y-3">
+                <div class="flex justify-between">
+                    <dt class="text-sm text-gray-500 dark:text-gray-400">Type</dt>
+                    <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ document.get_doc_type_display }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-sm text-gray-500 dark:text-gray-400">Controls</dt>
+                    <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ mapped_controls|length }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-sm text-gray-500 dark:text-gray-400">Uploaded</dt>
+                    <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ document.uploaded_at|date:"M d, Y" }}</dd>
+                </div>
+                {% if document.storage_link %}
+                <div class="flex justify-between">
+                    <dt class="text-sm text-gray-500 dark:text-gray-400">External</dt>
+                    <dd>
+                        <a href="{{ document.storage_link }}" target="_blank" rel="noopener noreferrer" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">
+                            View link
+                        </a>
+                    </dd>
+                </div>
+                {% endif %}
+            </dl>
+        </div>
+    </div>
+</div>
+{% endblock %}

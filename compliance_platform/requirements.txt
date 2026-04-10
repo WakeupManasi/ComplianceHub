@@ -1,0 +1,14 @@
+django
+requests
+beautifulsoup4
+PyMuPDF
+langchain
+langchain-community
+langchain-openai
+chromadb
+python-dotenv
+lxml
+feedparser
+schedule
+openai
+tiktoken

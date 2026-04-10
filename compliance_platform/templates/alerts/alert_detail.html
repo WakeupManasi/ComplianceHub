@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}{{ alert.title }} - ComplianceHub{% endblock %}
+{% block page_title %}Alert Detail{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Back link -->
+    <a href="{% url 'alerts:alert_list' %}" class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Alerts
+    </a>
+
+    <!-- Alert card -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="p-6">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-3">{{ alert.title }}</h2>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Type badge -->
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                            {{ alert.get_alert_type_display }}
+                        </span>
+
+                        <!-- Severity badge -->
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium
+                            {% if alert.severity == 'critical' %}bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300
+                            {% elif alert.severity == 'high' %}bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300
+                            {% elif alert.severity == 'medium' %}bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300
+                            {% else %}bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300
+                            {% endif %}">
+                            {{ alert.get_severity_display }} Severity
+                        </span>
+
+                        <!-- Read status -->
+                        {% if alert.is_read %}
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                            Read
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300">
+                            Unread
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if not alert.is_read %}
+                <form method="post" action="{% url 'alerts:dismiss_alert' alert.pk %}">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Mark as Read
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+
+            <!-- Description -->
+            <div class="mb-6">
+                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Description</h3>
+                <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ alert.description }}</p>
+            </div>
+
+            <!-- Date -->
+            <div class="mb-6">
+                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Created</h3>
+                <p class="text-sm text-gray-700 dark:text-gray-300">{{ alert.created_at|date:"F d, Y \a\t H:i" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Linked items -->
+    {% if alert.linked_cve or alert.linked_vendor or alert.linked_control %}
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Linked Items</h3>
+        </div>
+        <div class="p-6 space-y-4">
+            {% if alert.linked_cve %}
+            <div class="flex items-start gap-3">
+                <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">CVE</p>
+                    <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ alert.linked_cve }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if alert.linked_vendor %}
+            <div class="flex items-start gap-3">
+                <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Vendor</p>
+                    <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ alert.linked_vendor }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if alert.linked_control %}
+            <div class="flex items-start gap-3">
+                <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Control</p>
+                    <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ alert.linked_control }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

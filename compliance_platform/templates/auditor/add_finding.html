@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Add Finding - {{ audit.title }} - ComplianceHub{% endblock %}
+{% block page_title %}Add Finding{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
+        <a href="{% url 'auditor:audit_list' %}" class="hover:text-primary-600 dark:hover:text-primary-400">Audits</a>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        <a href="{% url 'auditor:audit_detail' pk=audit.pk %}" class="hover:text-primary-600 dark:hover:text-primary-400 truncate">{{ audit.title }}</a>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        <span class="text-gray-900 dark:text-white font-medium">Add Finding</span>
+    </nav>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">New Finding</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Record a finding for <strong>{{ audit.title }}</strong>.</p>
+        </div>
+
+        <form method="post" class="p-6 space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                {% for error in form.non_field_errors %}
+                <p class="text-sm text-red-700 dark:text-red-300">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Title -->
+            <div>
+                <label for="id_title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Title <span class="text-red-500">*</span></label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.title.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label for="id_description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Description <span class="text-red-500">*</span></label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Severity and Control -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                    <label for="id_severity" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Severity <span class="text-red-500">*</span></label>
+                    {{ form.severity }}
+                    {% if form.severity.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.severity.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="id_control" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Related Control</label>
+                    {{ form.control }}
+                    {% if form.control.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.control.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Evidence -->
+            <div>
+                <label for="id_evidence" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Evidence</label>
+                {{ form.evidence }}
+                {% if form.evidence.errors %}
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.evidence.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Corrective Action -->
+            <div>
+                <label for="id_corrective_action" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Corrective Action</label>
+                {{ form.corrective_action }}
+                {% if form.corrective_action.errors %}
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.corrective_action.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Due Date and Assigned To -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                    <label for="id_due_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Due Date</label>
+                    {{ form.due_date }}
+                    {% if form.due_date.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.due_date.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="id_assigned_to" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Assigned To</label>
+                    {{ form.assigned_to }}
+                    {% if form.assigned_to.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.assigned_to.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <a href="{% url 'auditor:audit_detail' pk=audit.pk %}"
+                   class="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="px-6 py-2.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm">
+                    Add Finding
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

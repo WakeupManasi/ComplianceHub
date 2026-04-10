@@ -1,0 +1,1383 @@
+{% extends "base.html" %}
+
+{% block title %}Dark Web & Live Threat Monitor{% endblock %}
+{% block page_title %}Agentic Threat Intelligence{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<style>
+    /* ===== CORE CYBER THEME ===== */
+    .cyber-card {
+        background: rgba(10, 15, 30, 0.92);
+        border: 1px solid rgba(0, 255, 128, 0.15);
+        box-shadow: 0 0 20px rgba(0, 255, 128, 0.04), inset 0 0 30px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(12px);
+        position: relative;
+        overflow: hidden;
+    }
+    .cyber-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 2px;
+        background: linear-gradient(90deg, transparent, #00ff80, transparent);
+    }
+    .cyber-card-red::before {
+        background: linear-gradient(90deg, transparent, #ff4444, transparent);
+    }
+    .cyber-card-blue::before {
+        background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+    }
+    .cyber-card-purple::before {
+        background: linear-gradient(90deg, transparent, #a855f7, transparent);
+    }
+    .cyber-card-amber::before {
+        background: linear-gradient(90deg, transparent, #f59e0b, transparent);
+    }
+
+    /* ===== STAT CARDS ===== */
+    .stat-card {
+        background: rgba(10, 15, 30, 0.85);
+        border: 1px solid rgba(0, 255, 128, 0.1);
+        transition: all 0.3s;
+    }
+    .stat-card:hover {
+        border-color: rgba(0, 255, 128, 0.4);
+        box-shadow: 0 0 25px rgba(0, 255, 128, 0.1);
+        transform: translateY(-2px);
+    }
+    .stat-number {
+        font-family: 'Courier New', monospace;
+        font-size: 2rem;
+        font-weight: bold;
+        background: linear-gradient(135deg, #00ff80, #00ccff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* ===== MAP ===== */
+    #liveMap {
+        height: 480px;
+        width: 100%;
+        background-color: #020617;
+        border-radius: 0.75rem;
+        border: 1px solid rgba(0, 255, 128, 0.15);
+    }
+    .threat-pulse {
+        border-radius: 50%;
+        width: 14px;
+        height: 14px;
+        position: relative;
+    }
+    .threat-pulse::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        border-radius: 50%;
+        animation: radarPulse 2s ease-out infinite;
+    }
+    .pulse-critical { background: rgba(239, 68, 68, 0.8); }
+    .pulse-critical::after { border: 2px solid #ef4444; }
+    .pulse-high { background: rgba(249, 115, 22, 0.8); }
+    .pulse-high::after { border: 2px solid #f97316; }
+    .pulse-medium { background: rgba(234, 179, 8, 0.7); }
+    .pulse-medium::after { border: 2px solid #eab308; }
+    .pulse-low { background: rgba(59, 130, 246, 0.6); }
+    .pulse-low::after { border: 2px solid #3b82f6; }
+
+    @keyframes radarPulse {
+        0% { transform: scale(0.5); opacity: 1; }
+        100% { transform: scale(4); opacity: 0; }
+    }
+
+    /* ===== ATTACK ARC ANIMATION ===== */
+    .attack-arc {
+        stroke-dasharray: 8, 4;
+        animation: dashMove 1s linear infinite;
+    }
+    @keyframes dashMove {
+        to { stroke-dashoffset: -24; }
+    }
+
+    /* ===== TERMINAL ===== */
+    .terminal-window {
+        background: #020810;
+        border: 1px solid #1a2332;
+        font-family: 'Courier New', Courier, monospace;
+        color: #00ff80;
+        overflow-y: auto;
+    }
+    .terminal-window::-webkit-scrollbar { width: 4px; }
+    .terminal-window::-webkit-scrollbar-track { background: #000; }
+    .terminal-window::-webkit-scrollbar-thumb { background: #00ff80; border-radius: 2px; }
+
+    .log-info { color: #00ff80; }
+    .log-warning { color: #f59e0b; }
+    .log-error { color: #ef4444; }
+    .log-success { color: #22c55e; }
+    .log-critical { color: #ff0040; font-weight: bold; }
+
+    /* ===== AGENT STATUS CARDS ===== */
+    .agent-card {
+        background: rgba(10, 15, 30, 0.7);
+        border: 1px solid rgba(0, 255, 128, 0.1);
+        transition: all 0.3s;
+    }
+    .agent-card:hover {
+        border-color: rgba(0, 255, 128, 0.3);
+        box-shadow: 0 0 15px rgba(0, 255, 128, 0.08);
+    }
+    .agent-status-active { color: #22c55e; }
+    .agent-status-scanning { color: #3b82f6; }
+    .agent-status-analyzing { color: #a855f7; }
+    .agent-status-idle { color: #6b7280; }
+    .agent-status-error { color: #ef4444; }
+
+    /* ===== TABS ===== */
+    .tab-btn {
+        padding: 8px 20px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.75rem;
+        border: 1px solid rgba(0, 255, 128, 0.2);
+        background: rgba(0, 0, 0, 0.3);
+        color: #9ca3af;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .tab-btn:hover { border-color: rgba(0, 255, 128, 0.4); color: #d1d5db; }
+    .tab-btn.active {
+        background: rgba(0, 255, 128, 0.1);
+        border-color: #00ff80;
+        color: #00ff80;
+        box-shadow: 0 0 10px rgba(0, 255, 128, 0.1);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ===== SEVERITY BADGES ===== */
+    .sev-critical { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .sev-high { background: rgba(249, 115, 22, 0.2); color: #fdba74; border: 1px solid rgba(249, 115, 22, 0.3); }
+    .sev-medium { background: rgba(234, 179, 8, 0.2); color: #fde047; border: 1px solid rgba(234, 179, 8, 0.3); }
+    .sev-low { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); }
+
+    /* ===== SEARCH INPUT ===== */
+    .cyber-input {
+        background: #050a10;
+        border: 1px solid rgba(107, 114, 128, 0.4);
+        color: #00ff80;
+        font-family: 'Courier New', monospace;
+        outline: none;
+        transition: border-color 0.3s;
+    }
+    .cyber-input:focus {
+        border-color: #00ff80;
+        box-shadow: 0 0 8px rgba(0, 255, 128, 0.15);
+    }
+    .cyber-input::placeholder { color: #4b5563; }
+
+    .cyber-btn {
+        font-family: 'Courier New', monospace;
+        transition: all 0.3s;
+    }
+    .cyber-btn:hover {
+        box-shadow: 0 0 15px rgba(0, 255, 128, 0.2);
+        transform: translateY(-1px);
+    }
+
+    /* ===== LIVE FEED TICKER ===== */
+    .attack-feed-item {
+        animation: fadeInSlide 0.5s ease-out;
+    }
+    @keyframes fadeInSlide {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ===== SCROLLBAR ===== */
+    .custom-scroll::-webkit-scrollbar { width: 4px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 2px; }
+
+    /* ===== PAGE THEME ===== */
+    body { background: #020617 !important; }
+    .main-content { background: transparent !important; }
+
+    /* ===== AGENT NETWORK GRAPH ===== */
+    .agent-node {
+        width: 60px; height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.6rem;
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        position: relative;
+    }
+    .agent-node::after {
+        content: '';
+        position: absolute;
+        width: 100%; height: 100%;
+        border-radius: 50%;
+        border: 2px solid currentColor;
+        animation: radarPulse 3s ease-out infinite;
+        opacity: 0.3;
+    }
+
+    /* ===== COUNTRY STATS BAR ===== */
+    .country-bar {
+        height: 6px;
+        border-radius: 3px;
+        transition: width 0.8s ease-out;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6 text-gray-200">
+
+    <!-- ===== HEADER ===== -->
+    <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 font-mono flex items-center gap-3">
+                <svg class="w-8 h-8 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"/></svg>
+                SWARM_AI // THREAT_INTELLIGENCE
+            </h1>
+            <p class="text-xs text-emerald-400/60 font-mono mt-1 ml-11">> 7-Agent Autonomous Pipeline Online | <span id="liveTime" class="text-cyan-400"></span></p>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 px-3 py-1.5 bg-emerald-900/20 border border-emerald-500/30 rounded-lg">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-xs font-mono text-emerald-400">SYSTEM ACTIVE</span>
+            </div>
+            <div class="text-xs font-mono text-gray-500" id="attackCounter">Attacks tracked: <span class="text-amber-400">0</span></div>
+        </div>
+    </div>
+
+    <!-- ===== STAT CARDS ROW ===== -->
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div class="stat-card rounded-xl p-4">
+            <div class="text-xs text-gray-500 font-mono mb-1">THREATS 24H</div>
+            <div class="stat-number text-xl" id="stat_threats_24h">--</div>
+        </div>
+        <div class="stat-card rounded-xl p-4">
+            <div class="text-xs text-gray-500 font-mono mb-1">CRITICAL ACTIVE</div>
+            <div class="stat-number text-xl text-red-400" id="stat_critical" style="-webkit-text-fill-color: #f87171;">--</div>
+        </div>
+        <div class="stat-card rounded-xl p-4">
+            <div class="text-xs text-gray-500 font-mono mb-1">DARK WEB HITS</div>
+            <div class="stat-number text-xl" id="stat_darkweb">--</div>
+        </div>
+        <div class="stat-card rounded-xl p-4">
+            <div class="text-xs text-gray-500 font-mono mb-1">LEAKED CREDS</div>
+            <div class="stat-number text-xl" id="stat_leaked" style="-webkit-text-fill-color: #f59e0b;">--</div>
+        </div>
+        <div class="stat-card rounded-xl p-4">
+            <div class="text-xs text-gray-500 font-mono mb-1">MONITORED</div>
+            <div class="stat-number text-xl" id="stat_monitored">--</div>
+        </div>
+        <div class="stat-card rounded-xl p-4">
+            <div class="text-xs text-gray-500 font-mono mb-1">AGENTS ACTIVE</div>
+            <div class="stat-number text-xl" id="stat_agents">--</div>
+        </div>
+    </div>
+
+    <!-- ===== TABS NAVIGATION ===== -->
+    <div class="flex flex-wrap gap-1">
+        <button class="tab-btn active rounded-t-lg" data-tab="map">LIVE_THREAT_MAP</button>
+        <button class="tab-btn rounded-t-lg" data-tab="darkweb">DARK_WEB_MONITOR</button>
+        <button class="tab-btn rounded-t-lg" data-tab="agents">AGENT_SWARM</button>
+        <button class="tab-btn rounded-t-lg" data-tab="cves">CVE_EXPLORER</button>
+        <button class="tab-btn rounded-t-lg" data-tab="email">EMAIL_&_ALERTS</button>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 1: LIVE THREAT MAP -->
+    <!-- ===================================================================== -->
+    <div class="tab-panel active" id="tab-map">
+        <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+            <!-- Map (3 cols) -->
+            <div class="cyber-card rounded-xl p-5 xl:col-span-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base font-bold text-gray-100 font-mono flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span>
+                        GLOBAL CYBER ATTACK MAP
+                    </h2>
+                    <div class="flex items-center gap-4 text-xs font-mono">
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> Critical</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-orange-500"></span> High</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-yellow-500"></span> Medium</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Low</span>
+                    </div>
+                </div>
+                <div id="liveMap"></div>
+                <!-- Attack Arc SVG Overlay -->
+                <svg id="attackArcs" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:600;"></svg>
+            </div>
+
+            <!-- Right Sidebar: Live Feed + Stats -->
+            <div class="space-y-6">
+                <!-- Live Attack Feed -->
+                <div class="cyber-card cyber-card-red rounded-xl p-5">
+                    <h3 class="text-sm font-bold text-gray-200 font-mono mb-3 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        LIVE ATTACK FEED
+                    </h3>
+                    <div class="space-y-2 max-h-48 overflow-y-auto custom-scroll" id="liveAttackFeed">
+                        <p class="text-xs text-gray-600 font-mono">Waiting for data...</p>
+                    </div>
+                </div>
+
+                <!-- Top Attackers -->
+                <div class="cyber-card rounded-xl p-5">
+                    <h3 class="text-sm font-bold text-gray-200 font-mono mb-3">TOP ATTACKER NATIONS</h3>
+                    <div id="topAttackers" class="space-y-2">
+                        <p class="text-xs text-gray-600 font-mono">Loading...</p>
+                    </div>
+                </div>
+
+                <!-- Top Targets -->
+                <div class="cyber-card cyber-card-blue rounded-xl p-5">
+                    <h3 class="text-sm font-bold text-gray-200 font-mono mb-3">TOP TARGET NATIONS</h3>
+                    <div id="topTargets" class="space-y-2">
+                        <p class="text-xs text-gray-600 font-mono">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Agent Terminal Below Map -->
+        <div class="cyber-card rounded-xl p-5 mt-6">
+            <h2 class="text-sm font-bold text-gray-100 font-mono mb-3 flex items-center gap-2">
+                <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                AGENT_TERMINAL // REAL-TIME LOG STREAM
+            </h2>
+            <div class="terminal-window p-4 rounded-lg text-xs" id="agentTerminal" style="height: 200px;">
+                <div class="mb-1 text-emerald-700">> Initializing SWARM_AI threat intelligence pipeline...</div>
+                <div class="mb-1 text-emerald-700">> Connecting to 12 threat intel sources...</div>
+                <div class="mb-1 text-emerald-700">> 7 agents online. Awaiting directives...</div>
+                <div class="mb-1 text-emerald-400 animate-pulse">_</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 2: DARK WEB MONITORING -->
+    <!-- ===================================================================== -->
+    <div class="tab-panel" id="tab-darkweb">
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <!-- Search Panel -->
+            <div class="cyber-card cyber-card-purple rounded-xl p-6">
+                <h2 class="text-lg font-bold text-gray-100 font-mono mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    DARK WEB SEARCH
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs text-gray-500 font-mono mb-1 block">SEARCH TYPE</label>
+                        <select id="dwSearchType" class="w-full cyber-input rounded-lg px-3 py-2.5 text-sm">
+                            <option value="email_search">Email Search</option>
+                            <option value="domain_monitor">Domain Monitor</option>
+                            <option value="org_search">Organization Search</option>
+                            <option value="full_recon">Full Reconnaissance</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 font-mono mb-1 block">SEARCH QUERY</label>
+                        <input type="text" id="dwSearchQuery" placeholder="email@domain.com or domain.com" class="w-full cyber-input rounded-lg px-3 py-2.5 text-sm">
+                    </div>
+                    <button id="btnDarkWebSearch" class="w-full py-3 rounded-lg bg-purple-900/30 text-purple-400 border border-purple-500/50 hover:bg-purple-500 hover:text-white font-mono text-sm cyber-btn">
+                        [ SEARCH_DARK_WEB ]
+                    </button>
+                    <div id="dwSearchStatus" class="text-xs font-mono text-gray-600 hidden"></div>
+                </div>
+
+                <!-- Domain Scanner -->
+                <div class="mt-6 pt-4 border-t border-gray-800">
+                    <h3 class="text-xs font-bold text-gray-400 font-mono mb-3">DOMAIN SCANNER</h3>
+                    <div class="space-y-3">
+                        <input type="text" id="domainScanInput" placeholder="@organization.com" class="w-full cyber-input rounded-lg px-3 py-2.5 text-sm">
+                        <button id="btnDomainScan" class="w-full py-2.5 rounded-lg bg-emerald-900/30 text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500 hover:text-gray-900 font-mono text-xs cyber-btn">
+                            [ SCAN_DOMAIN ]
+                        </button>
+                        <div id="domainScanResult" class="hidden"></div>
+                    </div>
+                </div>
+
+                <!-- LeakOSINT Deep Search -->
+                <div class="mt-4 pt-4 border-t border-gray-800">
+                    <h3 class="text-xs font-bold text-gray-400 font-mono mb-3">LEAKOSINT DEEP SEARCH</h3>
+                    <div class="space-y-3">
+                        <input type="text" id="leakosintQuery" placeholder="email, name, or phone..." class="w-full cyber-input rounded-lg px-3 py-2.5 text-sm">
+                        <button id="btnLeakosint" class="w-full py-2.5 rounded-lg bg-red-900/30 text-red-400 border border-red-500/50 hover:bg-red-500 hover:text-white font-mono text-xs cyber-btn">
+                            [ DEEP_SCAN ]
+                        </button>
+                        <div id="leakosintResult" class="hidden"></div>
+                    </div>
+                </div>
+
+                <!-- Recent Scans -->
+                <div class="mt-6 pt-4 border-t border-gray-800">
+                    <h3 class="text-xs font-bold text-gray-400 font-mono mb-3">RECENT SCANS</h3>
+                    <div class="space-y-2">
+                        {% for scan in recent_scans %}
+                        <div class="flex items-center justify-between text-xs font-mono p-2 bg-gray-900/30 rounded">
+                            <span class="text-gray-400 truncate flex-1">{{ scan.query|truncatechars:25 }}</span>
+                            <span class="ml-2 px-1.5 py-0.5 rounded text-xs {% if scan.status == 'completed' %}bg-green-900/30 text-green-400{% else %}bg-yellow-900/30 text-yellow-400{% endif %}">{{ scan.status }}</span>
+                        </div>
+                        {% empty %}
+                        <p class="text-xs text-gray-600 font-mono">No scans yet</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Results -->
+            <div class="cyber-card rounded-xl p-6 xl:col-span-2">
+                <h2 class="text-lg font-bold text-gray-100 font-mono mb-4">SEARCH RESULTS</h2>
+                <div id="dwResults" class="space-y-3 max-h-96 overflow-y-auto custom-scroll">
+                    <div class="text-center py-12">
+                        <svg class="w-16 h-16 text-gray-700 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <p class="text-sm text-gray-600 font-mono">Enter a search query to scan dark web sources</p>
+                        <p class="text-xs text-gray-700 font-mono mt-1">Searches BreachForums, XSS Forum, Telegram, DeHashed, HIBP & more</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dark Web Mentions & Leaked Credentials -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <!-- Dark Web Mentions -->
+            <div class="cyber-card rounded-xl p-6">
+                <h2 class="text-base font-bold text-gray-100 font-mono mb-4 flex items-center gap-2 border-b border-gray-800 pb-2">
+                    <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                    DARK WEB MENTIONS
+                </h2>
+                <div class="space-y-3 max-h-80 overflow-y-auto custom-scroll">
+                    {% for mention in dark_mentions %}
+                    <div class="p-3 bg-gray-900/50 border border-gray-800 rounded-lg hover:border-red-500/20 transition-colors">
+                        <div class="flex items-start justify-between mb-2">
+                            <span class="text-xs font-mono px-2 py-0.5 rounded {% if mention.risk_score >= 80 %}sev-critical{% elif mention.risk_score >= 60 %}sev-high{% else %}sev-medium{% endif %}">
+                                Risk: {{ mention.risk_score }}/100
+                            </span>
+                            <span class="text-xs text-gray-500 font-mono">{{ mention.timestamp|timesince }} ago</span>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-300">Keyword: <span class="text-emerald-400">{{ mention.keyword_matched }}</span></p>
+                        <p class="text-xs text-gray-400 mt-1 font-mono break-all leading-relaxed">"{{ mention.snippet|truncatechars:200 }}"</p>
+                        {% if mention.ai_analysis %}
+                        <div class="mt-2 text-xs bg-emerald-950/30 p-2 border-l-2 border-emerald-500 text-emerald-300 rounded-r">
+                            <span class="font-bold">AI Analysis:</span> {{ mention.ai_analysis|truncatechars:180 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-gray-600 font-mono text-center py-6">No dark web mentions tracked yet. Run a scan to detect threats.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Leaked Credentials -->
+            <div class="cyber-card cyber-card-amber rounded-xl p-6">
+                <h2 class="text-base font-bold text-gray-100 font-mono mb-4 flex items-center gap-2 border-b border-gray-800 pb-2">
+                    <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    LEAKED CREDENTIALS
+                </h2>
+                <div class="space-y-3 max-h-80 overflow-y-auto custom-scroll">
+                    {% for cred in leaked_creds %}
+                    <div class="p-3 bg-gray-900/50 border border-gray-800 rounded-lg">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm font-mono text-amber-400">{{ cred.email }}</span>
+                            <span class="text-xs font-mono px-2 py-0.5 rounded {% if cred.is_verified %}bg-red-900/30 text-red-400{% else %}bg-gray-800 text-gray-500{% endif %}">
+                                {% if cred.is_verified %}VERIFIED{% else %}UNVERIFIED{% endif %}
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-500 font-mono">Source: {{ cred.breach_source }}</p>
+                        <p class="text-xs text-gray-500 font-mono">Risk: <span class="{% if cred.risk_score >= 80 %}text-red-400{% elif cred.risk_score >= 60 %}text-orange-400{% else %}text-yellow-400{% endif %}">{{ cred.risk_score }}/100</span></p>
+                        {% if cred.ai_recommendation %}
+                        <p class="text-xs text-cyan-400/70 mt-1 font-mono">{{ cred.ai_recommendation|truncatechars:120 }}</p>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-gray-600 font-mono text-center py-6">No leaked credentials detected yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 3: AGENT SWARM -->
+    <!-- ===================================================================== -->
+    <div class="tab-panel" id="tab-agents">
+        <!-- Agent Pipeline Visualization -->
+        <div class="cyber-card cyber-card-blue rounded-xl p-6 mb-6">
+            <h2 class="text-lg font-bold text-gray-100 font-mono mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+                AGENTIC AI SWARM PIPELINE
+            </h2>
+            <p class="text-xs text-gray-500 font-mono mb-6">7-agent autonomous pipeline with orchestrator coordination. Each agent specializes in a specific threat intelligence task.</p>
+
+            <!-- Pipeline Flow -->
+            <div class="flex flex-wrap items-center justify-center gap-3 mb-6">
+                <div class="text-center">
+                    <div class="agent-node bg-blue-900/50 border-2 border-blue-500 text-blue-400 mx-auto mb-2">
+                        <span>ORCH</span>
+                    </div>
+                    <p class="text-xs font-mono text-blue-400">Orchestrator</p>
+                </div>
+                <svg class="w-8 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 12"><path d="M0 6h20m-4-4l4 4-4 4" stroke-width="2"/></svg>
+
+                <div class="text-center">
+                    <div class="agent-node bg-emerald-900/50 border-2 border-emerald-500 text-emerald-400 mx-auto mb-2">
+                        <span>RECON</span>
+                    </div>
+                    <p class="text-xs font-mono text-emerald-400">Recon Agent</p>
+                </div>
+                <svg class="w-8 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 12"><path d="M0 6h20m-4-4l4 4-4 4" stroke-width="2"/></svg>
+
+                <div class="text-center">
+                    <div class="agent-node bg-purple-900/50 border-2 border-purple-500 text-purple-400 mx-auto mb-2">
+                        <span>CRAWL</span>
+                    </div>
+                    <p class="text-xs font-mono text-purple-400">DarkWeb Crawler</p>
+                </div>
+                <svg class="w-8 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 12"><path d="M0 6h20m-4-4l4 4-4 4" stroke-width="2"/></svg>
+
+                <div class="text-center">
+                    <div class="agent-node bg-amber-900/50 border-2 border-amber-500 text-amber-400 mx-auto mb-2">
+                        <span>EMAIL</span>
+                    </div>
+                    <p class="text-xs font-mono text-amber-400">Email Hunter</p>
+                </div>
+                <svg class="w-8 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 12"><path d="M0 6h20m-4-4l4 4-4 4" stroke-width="2"/></svg>
+
+                <div class="text-center">
+                    <div class="agent-node bg-red-900/50 border-2 border-red-500 text-red-400 mx-auto mb-2">
+                        <span>ANLYZ</span>
+                    </div>
+                    <p class="text-xs font-mono text-red-400">Threat Analyzer</p>
+                </div>
+                <svg class="w-8 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 12"><path d="M0 6h20m-4-4l4 4-4 4" stroke-width="2"/></svg>
+
+                <div class="text-center">
+                    <div class="agent-node bg-cyan-900/50 border-2 border-cyan-500 text-cyan-400 mx-auto mb-2">
+                        <span>IOC</span>
+                    </div>
+                    <p class="text-xs font-mono text-cyan-400">IOC Extractor</p>
+                </div>
+                <svg class="w-8 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 12"><path d="M0 6h20m-4-4l4 4-4 4" stroke-width="2"/></svg>
+
+                <div class="text-center">
+                    <div class="agent-node bg-pink-900/50 border-2 border-pink-500 text-pink-400 mx-auto mb-2">
+                        <span>REPT</span>
+                    </div>
+                    <p class="text-xs font-mono text-pink-400">Report Gen</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Agent Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="agentCardsGrid">
+            {% for agent in agents %}
+            <div class="agent-card rounded-xl p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-bold font-mono text-gray-200">{{ agent.name }}</h3>
+                    <span class="px-2 py-0.5 rounded text-xs font-mono
+                        {% if agent.status == 'active' %}bg-green-900/30 text-green-400
+                        {% elif agent.status == 'scanning' %}bg-blue-900/30 text-blue-400
+                        {% elif agent.status == 'analyzing' %}bg-purple-900/30 text-purple-400
+                        {% elif agent.status == 'error' %}bg-red-900/30 text-red-400
+                        {% else %}bg-gray-800 text-gray-500{% endif %}">
+                        {{ agent.get_status_display }}
+                    </span>
+                </div>
+                <p class="text-xs text-gray-500 mb-3 leading-relaxed">{{ agent.description|truncatechars:120 }}</p>
+                <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+                    <div class="bg-gray-900/50 rounded p-2">
+                        <span class="text-gray-500">Tasks</span>
+                        <span class="block text-emerald-400 font-bold">{{ agent.tasks_completed }}</span>
+                    </div>
+                    <div class="bg-gray-900/50 rounded p-2">
+                        <span class="text-gray-500">Threats</span>
+                        <span class="block text-red-400 font-bold">{{ agent.threats_found }}</span>
+                    </div>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-1">
+                    {% for cap in agent.capabilities %}
+                    <span class="text-xs font-mono px-1.5 py-0.5 bg-gray-800 text-gray-400 rounded">{{ cap }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Trigger Scan Panel -->
+        <div class="cyber-card rounded-xl p-6 mt-6">
+            <h2 class="text-base font-bold text-gray-100 font-mono mb-4">TRIGGER AGENT SCAN</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input type="email" id="scanUserEmail" placeholder="Target email address..." class="cyber-input rounded-lg px-3 py-2.5 text-sm">
+                <input type="email" id="scanOrgEmail" placeholder="Organization email..." class="cyber-input rounded-lg px-3 py-2.5 text-sm">
+                <button id="btnAgentScan" class="py-2.5 rounded-lg bg-emerald-900/30 text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500 hover:text-gray-900 font-mono text-sm cyber-btn">
+                    [ DEPLOY_AGENT_SWARM ]
+                </button>
+            </div>
+            <div id="scanResult" class="mt-4 hidden"></div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 4: CVE EXPLORER -->
+    <!-- ===================================================================== -->
+    <div class="tab-panel" id="tab-cves">
+        <div class="cyber-card rounded-xl p-6">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+                <h2 class="text-lg font-bold text-gray-100 font-mono flex items-center gap-2">
+                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    CVE DATABASE (2023-2026)
+                </h2>
+                <div class="flex flex-wrap gap-2">
+                    <select id="cveYear" class="cyber-input rounded-lg px-3 py-2 text-xs">
+                        <option value="">All Years</option>
+                        <option value="2023">2023</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+                    <select id="cveSeverity" class="cyber-input rounded-lg px-3 py-2 text-xs">
+                        <option value="">All Severity</option>
+                        <option value="CRITICAL">Critical</option>
+                        <option value="HIGH">High</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="LOW">Low</option>
+                    </select>
+                    <input type="text" id="cveSearch" placeholder="Search CVE ID or keyword..." class="cyber-input rounded-lg px-3 py-2 text-xs w-64">
+                    <button id="btnCVESearch" class="px-4 py-2 rounded-lg bg-cyan-900/30 text-cyan-400 border border-cyan-500/50 hover:bg-cyan-500 hover:text-gray-900 font-mono text-xs cyber-btn">
+                        SEARCH
+                    </button>
+                </div>
+            </div>
+
+            <!-- CVE Stats -->
+            <div class="grid grid-cols-4 gap-3 mb-6">
+                <div class="text-center p-3 rounded-lg bg-red-900/10 border border-red-800/30">
+                    <div class="text-lg font-bold font-mono text-red-400" id="cveCriticalCount">--</div>
+                    <div class="text-xs text-gray-500 font-mono">CRITICAL</div>
+                </div>
+                <div class="text-center p-3 rounded-lg bg-orange-900/10 border border-orange-800/30">
+                    <div class="text-lg font-bold font-mono text-orange-400" id="cveHighCount">--</div>
+                    <div class="text-xs text-gray-500 font-mono">HIGH</div>
+                </div>
+                <div class="text-center p-3 rounded-lg bg-yellow-900/10 border border-yellow-800/30">
+                    <div class="text-lg font-bold font-mono text-yellow-400" id="cveMediumCount">--</div>
+                    <div class="text-xs text-gray-500 font-mono">MEDIUM</div>
+                </div>
+                <div class="text-center p-3 rounded-lg bg-blue-900/10 border border-blue-800/30">
+                    <div class="text-lg font-bold font-mono text-blue-400" id="cveLowCount">--</div>
+                    <div class="text-xs text-gray-500 font-mono">LOW</div>
+                </div>
+            </div>
+
+            <!-- CVE Results -->
+            <div id="cveResults" class="space-y-3 max-h-[600px] overflow-y-auto custom-scroll">
+                <p class="text-sm text-gray-600 font-mono text-center py-8">Loading CVE database...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 5: EMAIL & ALERTS -->
+    <!-- ===================================================================== -->
+    <div class="tab-panel" id="tab-email">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Organizer Email Setup -->
+            <div class="cyber-card rounded-xl p-6">
+                <h2 class="text-lg font-bold text-gray-100 font-mono mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    ORGANIZER EMAIL SETUP
+                </h2>
+                <p class="text-xs text-gray-500 font-mono mb-4">Configure notification email for threat alerts. All critical findings will be sent to the organizer email.</p>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs text-gray-500 font-mono mb-1 block">ORGANIZER EMAIL</label>
+                        <input type="email" id="organizerEmail" placeholder="organizer@company.com" class="w-full cyber-input rounded-lg px-3 py-2.5 text-sm" value="">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 font-mono mb-1 block">ALERT RECIPIENTS (comma separated)</label>
+                        <input type="text" id="alertRecipients" placeholder="soc@company.com, ciso@company.com" class="w-full cyber-input rounded-lg px-3 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 font-mono mb-1 block">ALERT THRESHOLD</label>
+                        <select id="alertThreshold" class="w-full cyber-input rounded-lg px-3 py-2.5 text-sm">
+                            <option value="critical">Critical Only</option>
+                            <option value="high" selected>High & Critical</option>
+                            <option value="medium">Medium & Above</option>
+                            <option value="all">All Alerts</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 font-mono mb-1 block">NOTIFICATION CHANNELS</label>
+                        <div class="flex flex-wrap gap-3 mt-2">
+                            <label class="flex items-center gap-2 text-xs font-mono text-gray-400">
+                                <input type="checkbox" checked class="accent-emerald-500"> Email
+                            </label>
+                            <label class="flex items-center gap-2 text-xs font-mono text-gray-400">
+                                <input type="checkbox" checked class="accent-emerald-500"> Slack
+                            </label>
+                            <label class="flex items-center gap-2 text-xs font-mono text-gray-400">
+                                <input type="checkbox" class="accent-emerald-500"> MS Teams
+                            </label>
+                            <label class="flex items-center gap-2 text-xs font-mono text-gray-400">
+                                <input type="checkbox" class="accent-emerald-500"> Webhook
+                            </label>
+                        </div>
+                    </div>
+                    <button id="btnSaveEmail" class="w-full py-3 rounded-lg bg-emerald-900/30 text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500 hover:text-gray-900 font-mono text-sm cyber-btn">
+                        [ SAVE_CONFIGURATION ]
+                    </button>
+                    <div id="emailSaveStatus" class="hidden"></div>
+                </div>
+            </div>
+
+            <!-- Quick Scan with Email -->
+            <div class="cyber-card cyber-card-red rounded-xl p-6">
+                <h2 class="text-lg font-bold text-gray-100 font-mono mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    QUICK THREAT SCAN
+                </h2>
+                <p class="text-xs text-gray-500 font-mono mb-4">Run an immediate scan against your email/domain. Results will be sent to the organizer email and displayed here.</p>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs text-gray-500 font-mono mb-1 block">TARGET USER EMAIL</label>
+                        <input type="email" id="quickScanEmail" placeholder="user@domain.com" class="w-full cyber-input rounded-lg px-3 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 font-mono mb-1 block">ORGANIZATION EMAIL</label>
+                        <input type="email" id="quickOrgEmail" placeholder="admin@company.com" class="w-full cyber-input rounded-lg px-3 py-2.5 text-sm">
+                    </div>
+                    <button id="btnQuickScan" class="w-full py-3 rounded-lg bg-red-900/30 text-red-400 border border-red-500/50 hover:bg-red-500 hover:text-white font-mono text-sm cyber-btn">
+                        [ INITIATE_DEEP_SCAN ]
+                    </button>
+                    <div id="quickScanResult" class="hidden"></div>
+                </div>
+
+                <!-- Monitored Domains -->
+                <div class="mt-6 pt-4 border-t border-gray-800">
+                    <h3 class="text-sm font-bold text-gray-200 font-mono mb-3">MONITORED DOMAINS</h3>
+                    <div class="space-y-2">
+                        {% for domain in monitored_domains %}
+                        <div class="flex items-center justify-between text-xs font-mono p-2 bg-gray-900/30 rounded-lg border border-gray-800">
+                            <span class="text-emerald-400">{{ domain.domain }}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-gray-500">{{ domain.total_breaches_found }} breaches</span>
+                                <span class="px-1.5 py-0.5 rounded
+                                    {% if domain.risk_level == 'CRITICAL' %}sev-critical
+                                    {% elif domain.risk_level == 'HIGH' %}sev-high
+                                    {% elif domain.risk_level == 'MEDIUM' %}sev-medium
+                                    {% else %}sev-low{% endif %}">
+                                    {{ domain.risk_level }}
+                                </span>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-xs text-gray-600 font-mono">No domains monitored yet</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verified Threats -->
+        <div class="cyber-card rounded-xl p-6 mt-6">
+            <h2 class="text-base font-bold text-gray-100 font-mono mb-4 flex items-center gap-2 border-b border-gray-800 pb-2">
+                <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                VERIFIED ACTIVE THREATS
+            </h2>
+            <div class="space-y-3">
+                {% for threat in recent_threats %}
+                <div class="flex items-center justify-between p-4 bg-gray-900/50 border border-gray-800 rounded-lg hover:border-red-500/20 transition-colors">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="w-2 h-2 rounded-full {% if threat.severity == 'CRITICAL' %}bg-red-500 animate-pulse{% elif threat.severity == 'HIGH' %}bg-orange-500{% elif threat.severity == 'MEDIUM' %}bg-yellow-500{% else %}bg-blue-500{% endif %}"></span>
+                            <span class="text-sm font-bold text-gray-200">{{ threat.title }}</span>
+                            <span class="text-xs font-mono px-2 py-0.5 rounded {% if threat.severity == 'CRITICAL' %}sev-critical{% elif threat.severity == 'HIGH' %}sev-high{% elif threat.severity == 'MEDIUM' %}sev-medium{% else %}sev-low{% endif %}">{{ threat.severity }}</span>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-1">{{ threat.description|truncatechars:150 }}</p>
+                        <p class="text-xs text-gray-600 font-mono mt-1">Actor: <span class="text-amber-400">{{ threat.actor|default:"Unknown" }}</span> | Region: {{ threat.target_region }} | Industry: {{ threat.target_industry }}</p>
+                    </div>
+                    <div class="text-right ml-4">
+                        <span class="text-xs font-mono text-gray-500">{{ threat.timestamp|timesince }} ago</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-sm text-gray-600 font-mono text-center py-6">No verified threats detected. System clear.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ===================================================================== -->
+<!-- JAVASCRIPT -->
+<!-- ===================================================================== -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = '{{ csrf_token }}';
+    let totalAttacks = 0;
+
+    // ===== LIVE CLOCK =====
+    function updateClock() {
+        document.getElementById('liveTime').textContent = new Date().toLocaleTimeString('en-US', {hour12: false}) + ' UTC';
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ===== TAB NAVIGATION =====
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+            if (this.dataset.tab === 'map') setTimeout(() => map.invalidateSize(), 100);
+            if (this.dataset.tab === 'cves') loadCVEs();
+        });
+    });
+
+    // ===== LEAFLET MAP =====
+    const map = L.map('liveMap', {
+        zoomControl: false,
+        attributionControl: false,
+        minZoom: 2,
+        maxZoom: 6,
+    }).setView([20, 20], 2);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd',
+        maxZoom: 20,
+        opacity: 0.7
+    }).addTo(map);
+
+    L.control.zoom({position: 'bottomright'}).addTo(map);
+
+    let activeMarkers = [];
+    let activeArcs = [];
+    const COUNTRIES = {{ countries|safe }};
+
+    // ===== ATTACK ARC DRAWING =====
+    function drawAttackArc(srcLat, srcLng, tgtLat, tgtLng, severity) {
+        const colors = {CRITICAL: '#ef4444', HIGH: '#f97316', MEDIUM: '#eab308', LOW: '#3b82f6'};
+        const color = colors[severity] || '#00ff80';
+
+        // Calculate curve control point
+        const midLat = (srcLat + tgtLat) / 2;
+        const midLng = (srcLng + tgtLng) / 2;
+        const dist = Math.sqrt(Math.pow(tgtLat - srcLat, 2) + Math.pow(tgtLng - srcLng, 2));
+        const curvature = dist * 0.3;
+
+        const points = [];
+        for (let t = 0; t <= 1; t += 0.05) {
+            const lat = (1-t)*(1-t)*srcLat + 2*(1-t)*t*(midLat + curvature) + t*t*tgtLat;
+            const lng = (1-t)*(1-t)*srcLng + 2*(1-t)*t*midLng + t*t*tgtLng;
+            points.push([lat, lng]);
+        }
+
+        const arc = L.polyline(points, {
+            color: color,
+            weight: 2,
+            opacity: 0.7,
+            dashArray: '8, 4',
+            className: 'attack-arc'
+        }).addTo(map);
+
+        activeArcs.push(arc);
+
+        // Auto-remove after 6 seconds
+        setTimeout(() => {
+            map.removeLayer(arc);
+            activeArcs = activeArcs.filter(a => a !== arc);
+        }, 6000);
+
+        // Animated dot along the arc
+        let dotIdx = 0;
+        const dot = L.circleMarker(points[0], {
+            radius: 4,
+            color: color,
+            fillColor: color,
+            fillOpacity: 1,
+            weight: 0
+        }).addTo(map);
+
+        const animInterval = setInterval(() => {
+            dotIdx++;
+            if (dotIdx >= points.length) {
+                clearInterval(animInterval);
+                map.removeLayer(dot);
+                return;
+            }
+            dot.setLatLng(points[dotIdx]);
+        }, 80);
+    }
+
+    // ===== TERMINAL =====
+    const terminal = document.getElementById('agentTerminal');
+    function logToTerminal(msg, level='info') {
+        const div = document.createElement('div');
+        div.className = 'mb-0.5 log-' + level;
+        const ts = new Date().toLocaleTimeString('en-US', {hour12: false});
+        div.textContent = `[${ts}] ${msg}`;
+        const cursor = terminal.querySelector('.animate-pulse');
+        if (cursor) terminal.insertBefore(div, cursor);
+        else terminal.appendChild(div);
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    // ===== FETCH LIVE THREATS =====
+    function fetchLiveThreats() {
+        fetch("{% url 'threat_intel:api_live_threats' %}")
+            .then(r => r.json())
+            .then(data => {
+                // Clean old markers
+                if (activeMarkers.length > 40) {
+                    activeMarkers.splice(0, 15).forEach(m => map.removeLayer(m));
+                }
+
+                // Draw attack arcs
+                data.attacks.forEach(atk => {
+                    totalAttacks++;
+                    drawAttackArc(atk.source_lat, atk.source_lng, atk.target_lat, atk.target_lng, atk.severity);
+
+                    // Source marker
+                    const srcIcon = L.divIcon({
+                        className: 'threat-pulse pulse-' + atk.severity.toLowerCase(),
+                        iconSize: [14, 14]
+                    });
+                    const srcMarker = L.marker([atk.source_lat, atk.source_lng], {icon: srcIcon}).addTo(map);
+                    srcMarker.bindPopup(`<div class="font-mono text-xs p-1"><b>${atk.source_country}</b> -> ${atk.target_country}<br>Type: ${atk.attack_type}<br>APT: ${atk.apt_group}<br>IP: ${atk.ip}:${atk.port}</div>`);
+                    activeMarkers.push(srcMarker);
+                });
+
+                // Point threats
+                data.threats.forEach(t => {
+                    const icon = L.divIcon({
+                        className: 'threat-pulse pulse-' + t.severity.toLowerCase(),
+                        iconSize: [10, 10]
+                    });
+                    const m = L.marker([t.lat, t.lng], {icon: icon}).addTo(map);
+                    m.bindPopup(`<div class="font-mono text-xs"><b>${t.severity}</b> - ${t.type}<br>${t.location}<br>IP: ${t.ip}</div>`);
+                    activeMarkers.push(m);
+                });
+
+                // Update live attack feed
+                updateAttackFeed(data.attacks);
+                document.querySelector('#attackCounter span').textContent = totalAttacks.toLocaleString();
+            })
+            .catch(() => logToTerminal("Threat feed connection timeout. Retrying...", "error"));
+    }
+
+    function updateAttackFeed(attacks) {
+        const feed = document.getElementById('liveAttackFeed');
+        attacks.forEach(atk => {
+            const item = document.createElement('div');
+            item.className = 'attack-feed-item flex items-center gap-2 p-1.5 bg-gray-900/40 rounded text-xs font-mono';
+            const sevColor = {CRITICAL:'text-red-400',HIGH:'text-orange-400',MEDIUM:'text-yellow-400',LOW:'text-blue-400'}[atk.severity] || 'text-gray-400';
+            item.innerHTML = `
+                <span class="w-1.5 h-1.5 rounded-full ${atk.severity==='CRITICAL'?'bg-red-500':'bg-orange-500'}"></span>
+                <span class="${sevColor}">${atk.source_code}</span>
+                <span class="text-gray-600">-></span>
+                <span class="text-cyan-400">${atk.target_code}</span>
+                <span class="text-gray-600 truncate flex-1">${atk.attack_type}</span>
+            `;
+            feed.insertBefore(item, feed.firstChild);
+            if (feed.children.length > 20) feed.removeChild(feed.lastChild);
+        });
+    }
+
+    setInterval(fetchLiveThreats, 4000);
+    setTimeout(fetchLiveThreats, 800);
+
+    // ===== FETCH AGENT LOGS =====
+    function fetchAgentLogs() {
+        fetch("{% url 'threat_intel:api_agent_logs' %}")
+            .then(r => r.json())
+            .then(data => {
+                if (data.logs.length > 0) {
+                    const log = data.logs[0];
+                    logToTerminal(`[${log.agent}] ${log.message}`, log.level);
+                }
+            });
+    }
+    setInterval(fetchAgentLogs, 5000);
+    setTimeout(fetchAgentLogs, 2000);
+
+    // ===== FETCH STATS =====
+    function fetchStats() {
+        fetch("{% url 'threat_intel:api_threat_stats' %}")
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('stat_threats_24h').textContent = data.total_threats_24h;
+                document.getElementById('stat_critical').textContent = data.critical_active;
+                document.getElementById('stat_darkweb').textContent = data.dark_web_mentions;
+                document.getElementById('stat_leaked').textContent = data.leaked_credentials;
+                document.getElementById('stat_monitored').textContent = data.monitored_domains;
+                document.getElementById('stat_agents').textContent = `${data.active_agents}/${data.total_agents}`;
+
+                // Country stats
+                renderCountryStats(data.country_stats);
+            });
+    }
+
+    function renderCountryStats(stats) {
+        if (!stats) return;
+        const attackersDiv = document.getElementById('topAttackers');
+        const targetsDiv = document.getElementById('topTargets');
+
+        if (stats.top_attackers && stats.top_attackers.length) {
+            const maxAtk = stats.top_attackers[0].attacks;
+            attackersDiv.innerHTML = stats.top_attackers.slice(0, 6).map(c => `
+                <div class="flex items-center gap-2 text-xs font-mono">
+                    <span class="w-8 text-gray-400">${c.code}</span>
+                    <div class="flex-1 bg-gray-800 rounded-full h-1.5">
+                        <div class="country-bar bg-red-500" style="width:${(c.attacks/maxAtk*100).toFixed(0)}%"></div>
+                    </div>
+                    <span class="text-red-400 w-10 text-right">${c.attacks}</span>
+                </div>
+            `).join('');
+        }
+
+        if (stats.top_targets && stats.top_targets.length) {
+            const maxTgt = stats.top_targets[0].attacks;
+            targetsDiv.innerHTML = stats.top_targets.slice(0, 6).map(c => `
+                <div class="flex items-center gap-2 text-xs font-mono">
+                    <span class="w-8 text-gray-400">${c.code}</span>
+                    <div class="flex-1 bg-gray-800 rounded-full h-1.5">
+                        <div class="country-bar bg-blue-500" style="width:${(c.attacks/maxTgt*100).toFixed(0)}%"></div>
+                    </div>
+                    <span class="text-blue-400 w-10 text-right">${c.attacks}</span>
+                </div>
+            `).join('');
+        }
+    }
+
+    fetchStats();
+    setInterval(fetchStats, 15000);
+
+    // ===== DARK WEB SEARCH =====
+    document.getElementById('btnDarkWebSearch').addEventListener('click', function() {
+        const btn = this;
+        const query = document.getElementById('dwSearchQuery').value.trim();
+        const searchType = document.getElementById('dwSearchType').value;
+        const statusDiv = document.getElementById('dwSearchStatus');
+        const resultsDiv = document.getElementById('dwResults');
+
+        if (!query) {
+            statusDiv.className = 'text-xs font-mono text-red-400 mt-3';
+            statusDiv.textContent = 'ERROR: Query is required';
+            return;
+        }
+
+        btn.textContent = '[ SCANNING... ]';
+        btn.disabled = true;
+        statusDiv.className = 'text-xs font-mono text-amber-400 mt-3';
+        statusDiv.textContent = 'Deploying agents across dark web sources...';
+
+        fetch("{% url 'threat_intel:api_dark_web_search' %}", {
+            method: 'POST',
+            headers: {'X-CSRFToken': csrfToken, 'Content-Type': 'application/json'},
+            body: JSON.stringify({query: query, search_type: searchType})
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.textContent = '[ SEARCH_DARK_WEB ]';
+            btn.disabled = false;
+
+            if (data.total_results === 0) {
+                resultsDiv.innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="text-emerald-400 text-3xl mb-2 font-mono">CLEAR</div>
+                        <p class="text-sm text-gray-500 font-mono">No results found for "${query}"</p>
+                        <p class="text-xs text-gray-600 font-mono mt-1">Searched ${data.total_results || 0} dark web sources</p>
+                    </div>`;
+                statusDiv.className = 'text-xs font-mono text-emerald-400 mt-3';
+                statusDiv.textContent = 'Scan complete. No threats detected.';
+                return;
+            }
+
+            statusDiv.className = 'text-xs font-mono text-red-400 mt-3';
+            statusDiv.textContent = `ALERT: ${data.total_results} result(s) found!`;
+
+            resultsDiv.innerHTML = data.results.map(r => `
+                <div class="p-4 bg-gray-900/50 border border-gray-800 rounded-lg hover:border-purple-500/20 transition-colors">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-mono px-2 py-0.5 rounded ${r.risk_score >= 80 ? 'sev-critical' : r.risk_score >= 60 ? 'sev-high' : 'sev-medium'}">
+                            Risk: ${r.risk_score}/100
+                        </span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-mono ${r.verified ? 'text-red-400' : 'text-gray-500'}">${r.verified ? 'VERIFIED' : 'UNVERIFIED'}</span>
+                            <span class="text-xs text-gray-500 font-mono">${r.timestamp}</span>
+                        </div>
+                    </div>
+                    <p class="text-sm font-mono text-purple-300 mb-1">${r.source}</p>
+                    <p class="text-xs text-gray-400 font-mono leading-relaxed">${r.snippet}</p>
+                    <div class="flex flex-wrap gap-1 mt-2">
+                        ${r.data_types.map(dt => `<span class="text-xs font-mono px-1.5 py-0.5 bg-gray-800 text-amber-400 rounded">${dt}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            logToTerminal(`Dark web search complete for "${query}". ${data.total_results} results found.`, data.total_results > 3 ? 'warning' : 'info');
+        })
+        .catch(() => {
+            btn.textContent = '[ SEARCH_DARK_WEB ]';
+            btn.disabled = false;
+            statusDiv.className = 'text-xs font-mono text-red-400 mt-3';
+            statusDiv.textContent = 'Connection error. Retrying...';
+        });
+    });
+
+    // ===== CVE EXPLORER =====
+    function loadCVEs() {
+        const search = document.getElementById('cveSearch').value.trim();
+        const severity = document.getElementById('cveSeverity').value;
+        const year = document.getElementById('cveYear').value;
+
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (severity) params.append('severity', severity);
+        if (year) params.append('year', year);
+
+        fetch(`{% url 'threat_intel:api_cve_feed' %}?${params}`)
+            .then(r => r.json())
+            .then(data => {
+                const resultsDiv = document.getElementById('cveResults');
+
+                // Count by severity
+                let counts = {CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0};
+                data.cves.forEach(c => { counts[c.severity] = (counts[c.severity] || 0) + 1; });
+                document.getElementById('cveCriticalCount').textContent = counts.CRITICAL;
+                document.getElementById('cveHighCount').textContent = counts.HIGH;
+                document.getElementById('cveMediumCount').textContent = counts.MEDIUM;
+                document.getElementById('cveLowCount').textContent = counts.LOW;
+
+                if (data.cves.length === 0) {
+                    resultsDiv.innerHTML = '<p class="text-sm text-gray-600 font-mono text-center py-8">No CVEs found matching criteria. Try running the seed command.</p>';
+                    return;
+                }
+
+                resultsDiv.innerHTML = data.cves.map(cve => `
+                    <div class="p-4 bg-gray-900/50 border border-gray-800 rounded-lg hover:border-cyan-500/20 transition-colors">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                    <a href="/cve/${cve.id}/" class="text-sm font-bold font-mono text-cyan-400 hover:text-cyan-300">${cve.cve_id}</a>
+                                    <span class="text-xs font-mono px-2 py-0.5 rounded sev-${cve.severity.toLowerCase()}">${cve.severity}</span>
+                                    <span class="text-xs font-mono text-gray-500">CVSS: <span class="${cve.cvss_score >= 9 ? 'text-red-400' : cve.cvss_score >= 7 ? 'text-orange-400' : 'text-yellow-400'}">${cve.cvss_score}</span></span>
+                                </div>
+                                <p class="text-xs text-gray-400 leading-relaxed mt-1">${cve.description}</p>
+                                <p class="text-xs text-gray-600 font-mono mt-2">Published: ${cve.published_date} ${cve.affected_products ? '| Products: ' + cve.affected_products.substring(0, 60) : ''}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            });
+    }
+
+    document.getElementById('btnCVESearch').addEventListener('click', loadCVEs);
+    document.getElementById('cveSearch').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') loadCVEs();
+    });
+    document.getElementById('cveYear').addEventListener('change', loadCVEs);
+    document.getElementById('cveSeverity').addEventListener('change', loadCVEs);
+
+    // Initial load
+    loadCVEs();
+
+    // ===== AGENT SCAN =====
+    function triggerScan(userEmailId, orgEmailId, btnId, resultId) {
+        const btn = document.getElementById(btnId);
+        const uEmail = document.getElementById(userEmailId).value || 'unknown@domain.com';
+        const oEmail = document.getElementById(orgEmailId).value || 'admin@domain.com';
+        const resultDiv = document.getElementById(resultId);
+
+        btn.innerHTML = '[ SCANNING... ]';
+        btn.classList.add('animate-pulse');
+
+        logToTerminal(`Deploying agent swarm for ${uEmail}...`, 'info');
+        logToTerminal('ORCHESTRATOR dispatching RECON_AGENT, DARKWEB_CRAWLER, EMAIL_HUNTER...', 'info');
+
+        fetch("{% url 'threat_intel:api_trigger_scan' %}", {
+            method: 'POST',
+            headers: {'X-CSRFToken': csrfToken, 'Content-Type': 'application/json'},
+            body: JSON.stringify({user_email: uEmail, organizer_email: oEmail})
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.innerHTML = btnId === 'btnAgentScan' ? '[ DEPLOY_AGENT_SWARM ]' : '[ INITIATE_DEEP_SCAN ]';
+            btn.classList.remove('animate-pulse');
+
+            logToTerminal(`Scan complete. ${data.new_findings} findings. ${data.recommendation}`, 'success');
+
+            resultDiv.className = 'mt-4 p-4 bg-gray-900/50 border border-emerald-500/30 rounded-lg';
+            resultDiv.innerHTML = `
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span class="text-sm font-bold font-mono text-emerald-400">SCAN COMPLETE</span>
+                </div>
+                <p class="text-xs font-mono text-gray-400">Scan ID: ${data.scan_id} | Findings: ${data.new_findings}</p>
+                <p class="text-xs font-mono text-amber-400 mt-1">${data.recommendation}</p>
+                <p class="text-xs font-mono text-gray-600 mt-2">Results: ${data.findings.join(', ')}</p>
+            `;
+        });
+    }
+
+    document.getElementById('btnAgentScan').addEventListener('click', () => triggerScan('scanUserEmail', 'scanOrgEmail', 'btnAgentScan', 'scanResult'));
+    document.getElementById('btnQuickScan').addEventListener('click', () => triggerScan('quickScanEmail', 'quickOrgEmail', 'btnQuickScan', 'quickScanResult'));
+
+    // ===== EMAIL SAVE =====
+    document.getElementById('btnSaveEmail').addEventListener('click', function() {
+        const orgEmail = document.getElementById('organizerEmail').value;
+        const recipients = document.getElementById('alertRecipients').value;
+        const threshold = document.getElementById('alertThreshold').value;
+        const statusDiv = document.getElementById('emailSaveStatus');
+
+        // Save to localStorage for demo
+        localStorage.setItem('threat_organizer_email', orgEmail);
+        localStorage.setItem('threat_alert_recipients', recipients);
+        localStorage.setItem('threat_alert_threshold', threshold);
+
+        statusDiv.className = 'mt-3 p-3 bg-emerald-900/20 border border-emerald-500/30 rounded-lg';
+        statusDiv.innerHTML = `
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span class="text-xs font-mono text-emerald-400">Configuration saved successfully!</span>
+            </div>
+            <p class="text-xs font-mono text-gray-500 mt-1">Alerts will be sent to: ${orgEmail || 'Not set'}</p>
+        `;
+
+        logToTerminal(`Email config updated. Organizer: ${orgEmail}, Threshold: ${threshold}`, 'success');
+    });
+
+    // ===== DOMAIN SCAN =====
+    document.getElementById('btnDomainScan').addEventListener('click', function() {
+        const btn = this;
+        const domain = document.getElementById('domainScanInput').value.trim();
+        const resultDiv = document.getElementById('domainScanResult');
+
+        if (!domain) {
+            resultDiv.className = 'mt-2 text-xs font-mono text-red-400';
+            resultDiv.textContent = 'Enter a domain (e.g., @company.com)';
+            return;
+        }
+
+        btn.textContent = '[ SCANNING... ]';
+        btn.disabled = true;
+        logToTerminal(`Deploying domain scan for ${domain}...`, 'info');
+
+        fetch("{% url 'threat_intel:api_domain_scan' %}", {
+            method: 'POST',
+            headers: {'X-CSRFToken': csrfToken, 'Content-Type': 'application/json'},
+            body: JSON.stringify({domain: domain})
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.textContent = '[ SCAN_DOMAIN ]';
+            btn.disabled = false;
+
+            const riskColors = {CRITICAL:'text-red-400',HIGH:'text-orange-400',MEDIUM:'text-yellow-400',LOW:'text-emerald-400'};
+            resultDiv.className = 'mt-2 p-3 bg-gray-900/50 border border-gray-700 rounded-lg';
+            resultDiv.innerHTML = `
+                <div class="text-xs font-mono">
+                    <p class="text-gray-400">Domain: <span class="text-cyan-400">${data.domain}</span></p>
+                    <p class="text-gray-400">Risk: <span class="${riskColors[data.risk_level] || 'text-gray-400'}">${data.risk_level}</span></p>
+                    <p class="text-gray-400">Emails checked: ${data.emails_checked}</p>
+                    <p class="text-gray-400">Leaked creds: <span class="text-red-400">${data.credentials_leaked}</span></p>
+                    <p class="text-gray-400">DW mentions: <span class="text-amber-400">${data.dark_web_mentions}</span></p>
+                </div>`;
+            logToTerminal(`Domain scan complete: ${data.domain} - Risk: ${data.risk_level}, ${data.credentials_leaked} leaks found`, data.risk_level === 'CRITICAL' ? 'critical' : 'success');
+        })
+        .catch(() => {
+            btn.textContent = '[ SCAN_DOMAIN ]';
+            btn.disabled = false;
+        });
+    });
+
+    // ===== LEAKOSINT DEEP SEARCH =====
+    document.getElementById('btnLeakosint').addEventListener('click', function() {
+        const btn = this;
+        const query = document.getElementById('leakosintQuery').value.trim();
+        const resultDiv = document.getElementById('leakosintResult');
+
+        if (!query) {
+            resultDiv.className = 'mt-2 text-xs font-mono text-red-400';
+            resultDiv.textContent = 'Enter a search query';
+            return;
+        }
+
+        btn.textContent = '[ SCANNING... ]';
+        btn.disabled = true;
+        logToTerminal(`LeakOSINT deep scan for "${query}"...`, 'info');
+
+        fetch("{% url 'threat_intel:api_leakosint_search' %}", {
+            method: 'POST',
+            headers: {'X-CSRFToken': csrfToken, 'Content-Type': 'application/json'},
+            body: JSON.stringify({query: query, limit: 100})
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.textContent = '[ DEEP_SCAN ]';
+            btn.disabled = false;
+
+            if (data.total === 0) {
+                resultDiv.className = 'mt-2 p-2 bg-emerald-900/20 border border-emerald-500/20 rounded text-xs font-mono text-emerald-400';
+                resultDiv.textContent = 'No breaches found. Target appears clean.';
+            } else {
+                resultDiv.className = 'mt-2 p-3 bg-red-900/10 border border-red-500/20 rounded';
+                resultDiv.innerHTML = `
+                    <p class="text-xs font-mono text-red-400 font-bold mb-2">ALERT: ${data.total} database(s) found!</p>
+                    ${data.results.slice(0, 3).map(r => `
+                        <div class="text-xs font-mono text-gray-400 mb-1 p-1 bg-gray-900/50 rounded">
+                            <span class="text-amber-400">${r.database}</span>: ${r.info || 'Data found'}
+                        </div>
+                    `).join('')}
+                    ${data.total > 3 ? `<p class="text-xs font-mono text-gray-500 mt-1">+${data.total - 3} more databases...</p>` : ''}
+                `;
+            }
+
+            // Also show in main results panel
+            const mainResults = document.getElementById('dwResults');
+            if (data.results.length > 0) {
+                mainResults.innerHTML = data.results.map(r => `
+                    <div class="p-4 bg-gray-900/50 border border-gray-800 rounded-lg">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-mono text-red-400 font-bold">${r.database}</span>
+                            <span class="text-xs font-mono px-2 py-0.5 rounded sev-high">BREACH</span>
+                        </div>
+                        <p class="text-xs text-gray-400 font-mono">${r.info || 'Records found matching query'}</p>
+                        ${r.records ? r.records.slice(0, 3).map(rec => `
+                            <div class="mt-2 p-2 bg-gray-800/50 rounded text-xs font-mono">
+                                ${Object.entries(rec).map(([k,v]) => `<span class="text-gray-500">${k}:</span> <span class="text-amber-400">${v}</span> `).join('<br>')}
+                            </div>
+                        `).join('') : ''}
+                    </div>
+                `).join('');
+            }
+
+            logToTerminal(`LeakOSINT: ${data.total} databases found for "${query}" (source: ${data.source})`, data.total > 0 ? 'warning' : 'success');
+        })
+        .catch(() => {
+            btn.textContent = '[ DEEP_SCAN ]';
+            btn.disabled = false;
+        });
+    });
+
+    // Load saved email config
+    const savedOrg = localStorage.getItem('threat_organizer_email');
+    const savedRecipients = localStorage.getItem('threat_alert_recipients');
+    const savedThreshold = localStorage.getItem('threat_alert_threshold');
+    if (savedOrg) document.getElementById('organizerEmail').value = savedOrg;
+    if (savedRecipients) document.getElementById('alertRecipients').value = savedRecipients;
+    if (savedThreshold) document.getElementById('alertThreshold').value = savedThreshold;
+});
+</script>
+{% endblock %}

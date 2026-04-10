@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}{{ audit.title }} - ComplianceHub{% endblock %}
+{% block page_title %}Audit Detail{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
+    <a href="{% url 'auditor:audit_list' %}" class="hover:text-primary-600 dark:hover:text-primary-400">Audits</a>
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <span class="text-gray-900 dark:text-white font-medium truncate">{{ audit.title }}</span>
+</nav>
+
+<!-- Audit Header -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="flex-1">
+            <div class="flex items-center gap-3 mb-3">
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ audit.title }}</h1>
+                {% if audit.is_overdue %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    Overdue
+                </span>
+                {% endif %}
+            </div>
+
+            <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300">
+                    {{ audit.get_audit_type_display }}
+                </span>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
+                    {% if audit.status == 'scheduled' %}bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300
+                    {% elif audit.status == 'in_progress' %}bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300
+                    {% elif audit.status == 'under_review' %}bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300
+                    {% elif audit.status == 'completed' %}bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300
+                    {% elif audit.status == 'cancelled' %}bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300
+                    {% endif %}">
+                    {{ audit.get_status_display }}
+                </span>
+                {% if audit.framework %}
+                <span class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    {{ audit.framework.name }}
+                </span>
+                {% endif %}
+                {% if audit.lead_auditor %}
+                <span class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    {{ audit.lead_auditor.username }}
+                </span>
+                {% endif %}
+            </div>
+
+            <!-- Dates -->
+            <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                    <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase">Scheduled Start</p>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ audit.scheduled_start|date:"M d, Y" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase">Scheduled End</p>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ audit.scheduled_end|date:"M d, Y" }}</p>
+                </div>
+                {% if audit.actual_start %}
+                <div>
+                    <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase">Actual Start</p>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ audit.actual_start|date:"M d, Y" }}</p>
+                </div>
+                {% endif %}
+                {% if audit.actual_end %}
+                <div>
+                    <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase">Actual End</p>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ audit.actual_end|date:"M d, Y" }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if audit.scope %}
+            <div class="mt-4">
+                <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase mb-1">Scope</p>
+                <p class="text-sm text-gray-700 dark:text-gray-300">{{ audit.scope }}</p>
+            </div>
+            {% endif %}
+
+            {% if audit.objectives %}
+            <div class="mt-3">
+                <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase mb-1">Objectives</p>
+                <p class="text-sm text-gray-700 dark:text-gray-300">{{ audit.objectives }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Status actions & score -->
+        <div class="flex flex-col items-end gap-3">
+            {% if audit.score is not None %}
+            <div class="text-center px-4 py-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase">Score</p>
+                <p class="text-3xl font-bold {% if audit.score >= 80 %}text-emerald-600 dark:text-emerald-400{% elif audit.score >= 60 %}text-amber-600 dark:text-amber-400{% else %}text-red-600 dark:text-red-400{% endif %}">{{ audit.score }}</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500">out of 100</p>
+            </div>
+            {% endif %}
+
+            <!-- Status action buttons -->
+            <div class="flex flex-wrap gap-2">
+                {% if audit.status == 'scheduled' %}
+                <form method="post" action="{% url 'auditor:update_audit_status' pk=audit.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="in_progress">
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                        Start Audit
+                    </button>
+                </form>
+                <form method="post" action="{% url 'auditor:update_audit_status' pk=audit.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="cancelled">
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                </form>
+                {% elif audit.status == 'in_progress' %}
+                <form method="post" action="{% url 'auditor:update_audit_status' pk=audit.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="completed">
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Complete Audit
+                    </button>
+                </form>
+                <form method="post" action="{% url 'auditor:update_audit_status' pk=audit.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="cancelled">
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                </form>
+                {% elif audit.status == 'under_review' %}
+                <form method="post" action="{% url 'auditor:update_audit_status' pk=audit.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="completed">
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Approve &amp; Complete
+                    </button>
+                </form>
+                {% elif audit.status == 'cancelled' %}
+                <form method="post" action="{% url 'auditor:update_audit_status' pk=audit.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="scheduled">
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-primary-700 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-900/30 rounded-lg transition-colors">
+                        Reschedule
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress bar for in_progress audits -->
+    {% if audit.status == 'in_progress' and audit.actual_start %}
+    <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between mb-2">
+            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Progress</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Day {{ audit.actual_start|timesince }} of {{ audit.duration_days }} days</p>
+        </div>
+        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+            <div class="bg-amber-500 h-2.5 rounded-full" style="width: {% widthratio audit.actual_start|timesince:"" 1 100 %}%"></div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Two-column layout: Findings and Timeline -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <!-- Findings Section (2/3 width) -->
+    <div class="xl:col-span-2">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Findings</h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ findings.count }} finding{{ findings.count|pluralize }}</p>
+                </div>
+                {% if audit.status != 'completed' and audit.status != 'cancelled' %}
+                <a href="{% url 'auditor:add_finding' audit_pk=audit.pk %}"
+                   class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    Add Finding
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for finding in findings %}
+                <div class="px-6 py-4">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ finding.title }}</h3>
+                                <!-- Severity badge -->
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold
+                                    {% if finding.severity == 'critical' %}bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400
+                                    {% elif finding.severity == 'major' %}bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400
+                                    {% elif finding.severity == 'minor' %}bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400
+                                    {% elif finding.severity == 'observation' %}bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400
+                                    {% else %}bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400
+                                    {% endif %}">
+                                    {{ finding.get_severity_display }}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{{ finding.description }}</p>
+                            <div class="flex items-center gap-3 mt-2 text-xs text-gray-400 dark:text-gray-500">
+                                {% if finding.control %}
+                                <span>Control: {{ finding.control.title }}</span>
+                                {% endif %}
+                                {% if finding.assigned_to %}
+                                <span>Assigned: {{ finding.assigned_to.username }}</span>
+                                {% endif %}
+                                {% if finding.due_date %}
+                                <span>Due: {{ finding.due_date|date:"M d, Y" }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <!-- Status -->
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap
+                            {% if finding.status == 'open' %}bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400
+                            {% elif finding.status == 'in_progress' %}bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400
+                            {% elif finding.status == 'resolved' %}bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400
+                            {% elif finding.status == 'verified' %}bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400
+                            {% else %}bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300
+                            {% endif %}">
+                            {{ finding.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="px-6 py-12 text-center">
+                    <svg class="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">No findings recorded yet.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline Section (1/3 width) -->
+    <div class="xl:col-span-1">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Timeline</h2>
+            </div>
+
+            <div class="p-6">
+                <div class="relative">
+                    <!-- Vertical line -->
+                    <div class="absolute left-3 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
+
+                    <div class="space-y-6">
+                        {% for event in timeline_events %}
+                        <div class="relative flex gap-4">
+                            <!-- Dot -->
+                            <div class="relative z-10 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center
+                                {% if event.event_type == 'created' %}bg-primary-100 dark:bg-primary-900/30
+                                {% elif event.event_type == 'started' %}bg-amber-100 dark:bg-amber-900/30
+                                {% elif event.event_type == 'finding' %}bg-red-100 dark:bg-red-900/30
+                                {% elif event.event_type == 'completed' %}bg-emerald-100 dark:bg-emerald-900/30
+                                {% elif event.event_type == 'status_change' %}bg-blue-100 dark:bg-blue-900/30
+                                {% elif event.event_type == 'review_approved' %}bg-emerald-100 dark:bg-emerald-900/30
+                                {% elif event.event_type == 'review_rejected' %}bg-red-100 dark:bg-red-900/30
+                                {% else %}bg-gray-100 dark:bg-gray-700
+                                {% endif %}">
+                                {% if event.event_type == 'created' %}
+                                <svg class="w-3 h-3 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                {% elif event.event_type == 'started' %}
+                                <svg class="w-3 h-3 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                                {% elif event.event_type == 'finding' %}
+                                <svg class="w-3 h-3 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"/></svg>
+                                {% elif event.event_type == 'completed' %}
+                                <svg class="w-3 h-3 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                {% else %}
+                                <svg class="w-3 h-3 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01"/></svg>
+                                {% endif %}
+                            </div>
+
+                            <div class="flex-1 min-w-0 pb-1">
+                                <p class="text-sm text-gray-700 dark:text-gray-300">{{ event.description }}</p>
+                                <div class="flex items-center gap-2 mt-1 text-xs text-gray-400 dark:text-gray-500">
+                                    {% if event.user %}
+                                    <span>{{ event.user.username }}</span>
+                                    <span>&middot;</span>
+                                    {% endif %}
+                                    <span>{{ event.created_at|timesince }} ago</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-6">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">No events yet.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

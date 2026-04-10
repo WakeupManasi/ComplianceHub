@@ -1,0 +1,237 @@
+{% extends "regulatory_intel/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+    <div>
+        <h1 class="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Regulatory Intelligence</h1>
+        <p class="text-gray-400 mt-1">Autonomous Compliance & Regulatory Monitoring System</p>
+    </div>
+    <div class="flex gap-3">
+        <form method="post" action="{% url 'regulatory_intel:run_scan' %}">
+            {% csrf_token %}
+            <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-semibold shadow-lg shadow-indigo-500/25 transition-all flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                Scan Regulators
+            </button>
+        </form>
+        <a href="{% url 'regulatory_intel:upload_document' %}" class="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition-all flex items-center gap-2 border border-white/10">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            Upload Document
+        </a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="glass rounded-2xl p-5 card-hover">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <span class="text-xs text-indigo-400 font-medium">Total</span>
+        </div>
+        <p class="text-3xl font-bold text-white">{{ total_docs }}</p>
+        <p class="text-xs text-gray-400 mt-1">Regulatory Documents</p>
+    </div>
+    <div class="glass rounded-2xl p-5 card-hover">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+            </div>
+            <span class="pulse-dot w-2 h-2 rounded-full bg-emerald-400"></span>
+        </div>
+        <p class="text-3xl font-bold text-white">{{ new_docs_count }}</p>
+        <p class="text-xs text-gray-400 mt-1">New / Unprocessed</p>
+    </div>
+    <div class="glass rounded-2xl p-5 card-hover">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <span class="text-xs text-amber-400 font-medium">Pending</span>
+        </div>
+        <p class="text-3xl font-bold text-white">{{ pending_reports }}</p>
+        <p class="text-xs text-gray-400 mt-1">Reports Awaiting Review</p>
+    </div>
+    <div class="glass rounded-2xl p-5 card-hover">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
+                <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+        </div>
+        <p class="text-3xl font-bold text-white">{{ impact_counts.critical|default:"0" }}</p>
+        <p class="text-xs text-gray-400 mt-1">Critical Impact Items</p>
+    </div>
+</div>
+
+<!-- Impact Distribution Bar -->
+<div class="glass rounded-2xl p-5 mb-8">
+    <h3 class="text-sm font-semibold text-gray-300 mb-3">Impact Distribution</h3>
+    <div class="flex rounded-xl overflow-hidden h-4">
+        {% with total=impact_counts.critical|add:impact_counts.high|add:impact_counts.medium|add:impact_counts.low %}
+        {% if total > 0 %}
+        <div class="bg-red-500 transition-all" style="width: {% widthratio impact_counts.critical total 100 %}%" title="Critical: {{ impact_counts.critical }}"></div>
+        <div class="bg-amber-500 transition-all" style="width: {% widthratio impact_counts.high total 100 %}%" title="High: {{ impact_counts.high }}"></div>
+        <div class="bg-blue-500 transition-all" style="width: {% widthratio impact_counts.medium total 100 %}%" title="Medium: {{ impact_counts.medium }}"></div>
+        <div class="bg-emerald-500 transition-all" style="width: {% widthratio impact_counts.low total 100 %}%" title="Low: {{ impact_counts.low }}"></div>
+        {% else %}
+        <div class="bg-gray-700 w-full flex items-center justify-center text-xs text-gray-400">No data yet – run a scan!</div>
+        {% endif %}
+        {% endwith %}
+    </div>
+    <div class="flex gap-6 mt-3 text-xs text-gray-400">
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> Critical ({{ impact_counts.critical|default:"0" }})</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> High ({{ impact_counts.high|default:"0" }})</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Medium ({{ impact_counts.medium|default:"0" }})</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Low ({{ impact_counts.low|default:"0" }})</span>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Recent Documents -->
+    <div class="lg:col-span-2 glass rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold text-white">Recent Documents</h2>
+            <a href="{% url 'regulatory_intel:document_list' %}" class="text-xs text-indigo-400 hover:text-indigo-300 transition">View All →</a>
+        </div>
+        {% if recent_docs %}
+        <div class="space-y-3">
+            {% for doc in recent_docs %}
+            <a href="{% url 'regulatory_intel:document_detail' doc.pk %}" class="block p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all card-hover impact-{{ doc.impact_level }}">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-sm font-semibold text-white truncate">{{ doc.title }}</h3>
+                        <div class="flex items-center gap-3 mt-1.5">
+                            <span class="text-xs px-2 py-0.5 rounded-full
+                                {% if doc.impact_level == 'critical' %}bg-red-500/20 text-red-300
+                                {% elif doc.impact_level == 'high' %}bg-amber-500/20 text-amber-300
+                                {% elif doc.impact_level == 'medium' %}bg-blue-500/20 text-blue-300
+                                {% else %}bg-emerald-500/20 text-emerald-300{% endif %}">
+                                {{ doc.get_impact_level_display }}
+                            </span>
+                            <span class="text-xs text-gray-500">{{ doc.get_doc_type_display }}</span>
+                            {% if doc.source %}<span class="text-xs text-gray-500">{{ doc.source.name }}</span>{% endif %}
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-3">
+                        {% if doc.is_new %}
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/30 text-indigo-300 font-medium">NEW</span>
+                        {% endif %}
+                        {% if doc.is_processed %}
+                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <p class="text-gray-400">No documents yet. Run a scan or upload a document to get started.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Panel -->
+    <div class="space-y-6">
+        <!-- Agent Activity -->
+        <div class="glass rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-white">Agent Activity</h2>
+                <a href="{% url 'regulatory_intel:agent_logs' %}" class="text-xs text-indigo-400 hover:text-indigo-300 transition">View All →</a>
+            </div>
+            {% if recent_logs %}
+            <div class="space-y-3">
+                {% for log in recent_logs|slice:":8" %}
+                <div class="flex items-start gap-3">
+                    <div class="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center text-xs font-bold
+                        {% if log.agent_type == 'monitor' %}bg-blue-500/20 text-blue-400
+                        {% elif log.agent_type == 'scraper' %}bg-purple-500/20 text-purple-400
+                        {% elif log.agent_type == 'diff' %}bg-amber-500/20 text-amber-400
+                        {% elif log.agent_type == 'classifier' %}bg-cyan-500/20 text-cyan-400
+                        {% elif log.agent_type == 'mapper' %}bg-emerald-500/20 text-emerald-400
+                        {% elif log.agent_type == 'drafter' %}bg-pink-500/20 text-pink-400
+                        {% else %}bg-indigo-500/20 text-indigo-400{% endif %}">
+                        {% if log.agent_type == 'monitor' %}M{% elif log.agent_type == 'scraper' %}S{% elif log.agent_type == 'diff' %}D{% elif log.agent_type == 'classifier' %}C{% elif log.agent_type == 'mapper' %}P{% elif log.agent_type == 'drafter' %}A{% else %}R{% endif %}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs text-white truncate">{{ log.action }}</p>
+                        <p class="text-xs text-gray-500">{{ log.created_at|timesince }} ago ·
+                            <span class="{% if log.status == 'completed' %}text-emerald-400{% elif log.status == 'failed' %}text-red-400{% else %}text-amber-400{% endif %}">{{ log.get_status_display }}</span>
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-sm text-gray-400 text-center py-4">No agent activity recorded yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Monitored Sources -->
+        <div class="glass rounded-2xl p-6">
+            <h2 class="text-lg font-bold text-white mb-4">Monitored Sources</h2>
+            {% if sources %}
+            <div class="space-y-3">
+                {% for src in sources %}
+                <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+                    <div class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></div>
+                    <div>
+                        <p class="text-xs font-semibold text-white">{{ src.name }}</p>
+                        <p class="text-xs text-gray-500">{{ src.get_source_type_display }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="space-y-3">
+                <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+                    <div class="w-2 h-2 rounded-full bg-blue-400 pulse-dot"></div>
+                    <div>
+                        <p class="text-xs font-semibold text-white">RBI</p>
+                        <p class="text-xs text-gray-500">Reserve Bank of India</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+                    <div class="w-2 h-2 rounded-full bg-amber-400 pulse-dot"></div>
+                    <div>
+                        <p class="text-xs font-semibold text-white">SEBI</p>
+                        <p class="text-xs text-gray-500">Securities Exchange Board</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+                    <div class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></div>
+                    <div>
+                        <p class="text-xs font-semibold text-white">MCA</p>
+                        <p class="text-xs text-gray-500">Ministry of Corporate Affairs</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Quick Links -->
+        <div class="glass rounded-2xl p-6">
+            <h2 class="text-lg font-bold text-white mb-4">Quick Links</h2>
+            <div class="space-y-2">
+                <a href="https://www.rbi.org.in/Scripts/NotificationUser.aspx" target="_blank" class="flex items-center gap-2 text-xs text-gray-300 hover:text-indigo-400 transition p-2 rounded-lg hover:bg-white/5">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    RBI Notifications
+                </a>
+                <a href="https://www.sebi.gov.in/" target="_blank" class="flex items-center gap-2 text-xs text-gray-300 hover:text-indigo-400 transition p-2 rounded-lg hover:bg-white/5">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    SEBI Circulars
+                </a>
+                <a href="https://egazette.gov.in/" target="_blank" class="flex items-center gap-2 text-xs text-gray-300 hover:text-indigo-400 transition p-2 rounded-lg hover:bg-white/5">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    eGazette India
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

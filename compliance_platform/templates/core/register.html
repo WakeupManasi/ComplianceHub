@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - ComplianceHub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: { primary: { 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' } } } } }
+        ;(function(){ const t = localStorage.getItem('theme'); if (t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark'); })();
+    </script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex items-center justify-center px-4 py-8">
+
+<div class="w-full max-w-md">
+    <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 dark:bg-indigo-500 mb-4">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">ComplianceHub</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Create your account</p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 border border-gray-200 dark:border-gray-700">
+        <form method="post" class="space-y-5">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                {% for error in form.non_field_errors %}
+                <p class="text-sm text-red-700 dark:text-red-300">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div>
+                <label for="id_username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Username</label>
+                <input type="text" name="username" id="id_username" value="{{ form.username.value|default:'' }}"
+                       autocomplete="username" required
+                       class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                       placeholder="Choose a username">
+                {% if form.username.errors %}<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.username.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div>
+                <label for="id_email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email Address</label>
+                <input type="email" name="email" id="id_email" value="{{ form.email.value|default:'' }}"
+                       autocomplete="email" required
+                       class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                       placeholder="you@company.com">
+                {% if form.email.errors %}<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.email.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div>
+                <label for="id_password1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password</label>
+                <input type="password" name="password1" id="id_password1" autocomplete="new-password" required
+                       class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                       placeholder="Create a password">
+                {% if form.password1.errors %}<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.password1.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div>
+                <label for="id_password2" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Confirm Password</label>
+                <input type="password" name="password2" id="id_password2" autocomplete="new-password" required
+                       class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                       placeholder="Confirm your password">
+                {% if form.password2.errors %}<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.password2.errors.0 }}</p>{% endif %}
+            </div>
+
+            <button type="submit"
+                    class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                </svg>
+                Create Account
+            </button>
+        </form>
+    </div>
+
+    <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+        Already have an account?
+        <a href="{% url 'login' %}" class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 transition-colors">Sign in</a>
+    </p>
+</div>
+</body>
+</html>
